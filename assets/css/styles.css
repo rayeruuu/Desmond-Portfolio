@@ -433,14 +433,23 @@ input:focus, textarea:focus, .btn:focus, .filter:focus { outline: 2px solid tran
   .card-links .btn,
   #modalLinks .btn { width: 100%; flex: 1 1 auto; }
   #modalLinks { flex-direction: column; }
+  .code-dropdown { width: 100%; }
+  .code-dropdown .btn { width: 100%; }
+  .code-dropdown__menu {
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    min-width: 100%;
+    transform-origin: top center;
+  }
   .stack-grid,
   .resume-grid { grid-template-columns: minmax(0, 1fr); }
   .email-row { flex-direction: column; align-items: flex-start; }
-  .modal { align-items: flex-start; padding: 0; }
-  .modal-dialog { width: 100vw; max-height: 100vh; height: 100vh; border-radius: 0; }
-  .modal-content { grid-template-rows: auto auto 1fr; max-height: 100vh; }
-  .modal-media { min-height: 45vh; max-height: 55vh; }
-  .modal-side { padding: 1rem 1.25rem 2rem; }
+  .modal { align-items: flex-start; padding: 0; overflow-y: auto; }
+  .modal-dialog { width: 100vw; min-height: 100vh; height: auto; max-height: none; border-radius: 0; }
+  .modal-content { grid-template-rows: auto auto 1fr; max-height: none; }
+  .modal-media { min-height: 45vh; max-height: none; }
+  .modal-side { padding: 1rem 1.25rem 2rem; overflow: visible; }
   .controls { padding: 0 0.25rem; }
   .controls .ctrl { width: 32px; height: 32px; }
 }
