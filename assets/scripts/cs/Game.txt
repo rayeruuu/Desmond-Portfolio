@@ -1,0 +1,840 @@
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using System;
+using System.Collections.Generic;
+
+
+namespace SpaceTry
+{
+    public class Game1 : Game
+    {
+        private GraphicsDeviceManager _graphics;
+        private SpriteBatch _spriteBatch;
+
+        private Texture2D _playerTexture;
+        private Vector2 _playerPosition;
+        private Vector2 _playerVelocity;
+        private int _playerHealth;
+        private int _playerLives;
+
+        private Texture2D _enemyTexture;
+        private Vector2 _enemyPosition;
+        private Vector2 _enemyVelocity;
+        private int _enemyHealth;
+        private bool _enemyActive;
+
+        private Texture2D _enemyTexture2;
+        private Vector2 _enemyPosition2;
+        private Vector2 _enemyVelocity2;
+        private int _enemyHealth2;
+        private bool _enemyActive2;
+
+        private Texture2D _enemyTexture3;
+        private Vector2 _enemyPosition3;
+        private Vector2 _enemyVelocity3;
+        private int _enemyHealth3;
+        private bool _enemyActive3;
+
+        private Texture2D _bulletTexture;
+        private List<Vector2> _bulletPositions;
+        private List<Vector2> _bulletVelocities;
+
+        private Texture2D _laserTexture;
+        private List<Vector2> _laserPositions;
+        private List<Vector2> _laserVelocities;
+
+        private Texture2D _backgroundTexture;
+
+        private Texture2D _bossTexture;
+        private Vector2 _bossPosition;
+        private Vector2 _bossVelocity;
+        private int _bossHealth;
+        private bool _bossActive;
+
+        private Random _random;
+        private int _score;
+
+        private SpriteFont _font;
+        private KeyboardState _previousKeyboardState;
+
+        private Texture2D _asteroidTexture;
+        private List<Vector2> _asteroidPositions;
+        private List<Vector2> _asteroidVelocities;
+        private const int AsteroidDamage = 10;
+        float asteroidScale = 0.2f;
+        private bool _gameFrozen = false;
+
+        private SoundEffect _explosionEffect;
+
+        private SoundEffect _bulletEffect;
+        private SoundEffect _laserEffect;
+        private SoundEffect _backgroundSound;
+
+
+        private enum GameState
+        {
+            Intro,
+            Playing
+        }
+
+        public enum IntroState
+        {
+            PlayerIntro,
+            EnemyIntro
+        }
+
+        private bool _playerIntroPlayed = false;
+        private GameState _currentState;
+        private float _introTimer;
+        private const float IntroDuration = 2f;
+
+
+        public Game1()
+        {
+            _graphics = new GraphicsDeviceManager(this);
+            Content.RootDirectory = "Content";
+            IsMouseVisible = true;
+            _random = new Random();
+        }
+
+        protected override void Initialize()
+        {
+
+            _currentState = GameState.Intro;
+            _introTimer = 0f;
+
+            _playerPosition = new Vector2(50, GraphicsDevice.Viewport.Height - 300);
+            _playerVelocity = Vector2.Zero;
+            _playerHealth = 300;
+            _playerLives = 3;
+
+            _enemyPosition = new Vector2(GraphicsDevice.Viewport.Width - 200, GraphicsDevice.Viewport.Height - 300);
+            _enemyVelocity = new Vector2(0, 3); // Move up and down
+            _enemyHealth = 300;
+            _enemyActive = true;
+
+            _enemyPosition2 = new Vector2(GraphicsDevice.Viewport.Width - 200, GraphicsDevice.Viewport.Height - 300);
+            _enemyVelocity2 = new Vector2(0, 4); // Move up and down
+            _enemyHealth2 = 400;
+            _enemyActive2 = false; // Initially inactive
+
+            _enemyPosition3 = new Vector2(GraphicsDevice.Viewport.Width - 200, GraphicsDevice.Viewport.Height - 300);
+            _enemyVelocity3 = new Vector2(0, 5); // Move up and down
+            _enemyHealth3 = 500;
+            _enemyActive3 = false; // Initially inactive
+
+            _bossPosition = new Vector2(GraphicsDevice.Viewport.Width - 200, GraphicsDevice.Viewport.Height - 300);
+            _bossVelocity = new Vector2(0, 7); // Move up and down
+            _bossHealth = 700;
+            _bossActive = false; // Initially inactive
+
+            _bulletPositions = new List<Vector2>();
+            _bulletVelocities = new List<Vector2>();
+
+            _laserPositions = new List<Vector2>();
+            _laserVelocities = new List<Vector2>();
+
+            _score = 0;
+
+
+
+
+            _asteroidPositions = new List<Vector2>();
+            _asteroidVelocities = new List<Vector2>();
+
+
+            _gameFrozen = false;
+
+
+            base.Initialize();
+        }
+
+        protected override void LoadContent()
+        {
+            _spriteBatch = new SpriteBatch(GraphicsDevice);
+            _playerTexture = Content.Load<Texture2D>("playerShip");
+            _enemyTexture = Content.Load<Texture2D>("enemyShip");
+            _enemyTexture2 = Content.Load<Texture2D>("enemyShip2");
+            _enemyTexture3 = Content.Load<Texture2D>("enemyShip3");
+            _bulletTexture = Content.Load<Texture2D>("bulletTexture");
+            _laserTexture = Content.Load<Texture2D>("laserTexture");
+            _backgroundTexture = Content.Load<Texture2D>("background");
+            _bossTexture = Content.Load<Texture2D>("bossShip");
+            _explosionEffect = Content.Load<SoundEffect>("explosion");
+            _bulletEffect = Content.Load<SoundEffect>("bullet");
+            _laserEffect = Content.Load<SoundEffect>("laser");
+            _asteroidTexture = Content.Load<Texture2D>("asteroid");
+            _font = Content.Load<SpriteFont>("Arial");
+
+
+            // Create a basic SpriteFont programmatically
+
+        }
+
+
+        private void DrawHealthBar(SpriteBatch spriteBatch, Vector2 position, int currentHealth, int maxHealth, int width, int height, Color color)
+        {
+            // Calculate the percentage of health remaining
+            float healthPercentage = (float)currentHealth / maxHealth;
+
+            // Calculate the height of the health bar based on the percentage
+            int healthBarHeight = (int)(height * healthPercentage);
+
+            // Create a 1x1 texture for the health bar background
+            Texture2D healthBarBackground = new Texture2D(GraphicsDevice, 1, 1);
+            healthBarBackground.SetData(new[] { Color.Red });
+
+            // Create a 1x1 texture for the health bar foreground
+            Texture2D healthBarForeground = new Texture2D(GraphicsDevice, 1, 1);
+            healthBarForeground.SetData(new[] { color });
+
+            // Draw the health bar background
+            spriteBatch.Draw(healthBarBackground, new Rectangle((int)position.X - 10, (int)position.Y, width, height), Color.Gray);
+
+            // Draw the health bar foreground
+            spriteBatch.Draw(healthBarForeground, new Rectangle((int)position.X - 10, (int)position.Y + height - healthBarHeight, width, healthBarHeight), color);
+        }
+
+        private void EnemyDrawHealthBar(SpriteBatch spriteBatch, Vector2 position, int currentHealth, int maxHealth, int width, int height, Color color)
+        {
+            // Calculate the percentage of health remaining
+            float healthPercentage = (float)currentHealth / maxHealth;
+
+            // Calculate the width of the health bar based on the percentage
+            int healthBarWidth = (int)(width * healthPercentage);
+
+            // Create a 1x1 texture for the health bar background
+            Texture2D healthBarBackground = new Texture2D(GraphicsDevice, 1, 1);
+            healthBarBackground.SetData(new[] { Color.Red });
+
+            // Create a 1x1 texture for the health bar foreground
+            Texture2D healthBarForeground = new Texture2D(GraphicsDevice, 1, 1);
+            healthBarForeground.SetData(new[] { color });
+
+            // Draw the health bar background
+            spriteBatch.Draw(healthBarBackground, new Rectangle((int)position.X, (int)position.Y, width, height), Color.Gray);
+
+            // Draw the health bar foreground
+            spriteBatch.Draw(healthBarForeground, new Rectangle((int)position.X, (int)position.Y, healthBarWidth, height), color);
+        }
+
+
+
+
+        protected override void Update(GameTime gameTime)
+        {
+
+
+            int adjustedWidth = (int)(_enemyTexture.Width * 0.4); // 70% of the original width
+            int adjustedHeight = (int)(_enemyTexture.Height * 0.2); // 70% of the original height
+            int offsetX = (int)((_enemyTexture.Width - adjustedWidth) / 3); // Center the smaller rectangle horizontally
+            int offsetY = (int)((_enemyTexture.Height - adjustedHeight) / 15); // Center the smaller rectangle vertically
+
+
+            int adjustedWidth2 = (int)(_bossTexture.Width * 0.5); // 70% of the original width
+            int adjustedHeight2 = (int)(_bossTexture.Height * 0.4); // 70% of the original height
+            int offsetX2 = (int)((_bossTexture.Width - adjustedWidth) / 3); // Center the smaller rectangle horizontally
+            int offsetY2 = (int)((_bossTexture.Height - adjustedHeight) / 10); // Center the smaller rectangle vertically
+
+            int playerAdjustedWidth = (int)(_playerTexture.Width * 0.3); // 70% of the original width
+            int playerAdjustedHeight = (int)(_playerTexture.Height * 0.3); // 70% of the original height
+            int playerOffsetX = (int)((_playerTexture.Width - playerAdjustedWidth) / 20); // Center the smaller rectangle horizontally
+            int playerOffsetY = (int)((_playerTexture.Height - playerAdjustedHeight) / 15);
+
+            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+                Exit();
+
+            var keyboardState = Keyboard.GetState();
+            if (!_gameFrozen)
+                switch (_currentState)
+                {
+                    case GameState.Intro:
+                        _introTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                        float progress = MathHelper.Clamp(_introTimer / IntroDuration, 0f, 1f);
+
+                        // Only update player's intro position if it hasn't been played yet
+                        if (!_playerIntroPlayed)
+                        {
+                            _playerPosition.X = MathHelper.Lerp(-100, 100, progress); // Adjust the target position as needed
+
+                            // Check if player intro animation is complete
+                            if (progress >= 1f)
+                            {
+                                _playerIntroPlayed = true; // Set flag to true once intro animation is complete
+                            }
+                        }
+
+                        // Slide the enemies and boss into position based on the current active state
+                        if (_enemyActive)
+                        {
+                            _enemyPosition.X = MathHelper.Lerp(GraphicsDevice.Viewport.Width + 100, GraphicsDevice.Viewport.Width - 200, progress);
+                        }
+                        else if (_enemyActive2)
+                        {
+                            _enemyPosition2.X = MathHelper.Lerp(GraphicsDevice.Viewport.Width + 100, GraphicsDevice.Viewport.Width - 200, progress);
+                        }
+                        else if (_enemyActive3)
+                        {
+                            _enemyPosition3.X = MathHelper.Lerp(GraphicsDevice.Viewport.Width + 100, GraphicsDevice.Viewport.Width - 200, progress);
+                        }
+                        else if (_bossActive)
+                        {
+                            _bossPosition.X = MathHelper.Lerp(GraphicsDevice.Viewport.Width + 100, GraphicsDevice.Viewport.Width - 200, progress);
+                        }
+
+                        if (progress >= 1f && _playerIntroPlayed)
+                        {
+                            _currentState = GameState.Playing;
+                        }
+                        break;
+
+
+                    case GameState.Playing:
+                        // Player movement
+                        if (keyboardState.IsKeyDown(Keys.W))
+                            _playerVelocity.Y = -5;
+                        else if (keyboardState.IsKeyDown(Keys.S))
+                            _playerVelocity.Y = 5;
+                        else
+                            _playerVelocity.Y = 0;
+
+                        if (keyboardState.IsKeyDown(Keys.A))
+                            _playerVelocity.X = -5;
+                        else if (keyboardState.IsKeyDown(Keys.D))
+                            _playerVelocity.X = 5;
+                        else
+                            _playerVelocity.X = 0;
+
+                        _playerPosition += _playerVelocity;
+
+                        // Ensure player stays within bounds
+                        if (_playerPosition.X < 0)
+                            _playerPosition.X = 0;
+                        if (_playerPosition.X > GraphicsDevice.Viewport.Width - _playerTexture.Width / 2)
+                            _playerPosition.X = GraphicsDevice.Viewport.Width - _playerTexture.Width / 2;
+                        if (_playerPosition.Y < 0)
+                            _playerPosition.Y = 0;
+                        if (_playerPosition.Y > GraphicsDevice.Viewport.Height - _playerTexture.Height / 2)
+                            _playerPosition.Y = GraphicsDevice.Viewport.Height - _playerTexture.Height / 2;
+
+                        // Player shooting
+                        if (keyboardState.IsKeyDown(Keys.Space) && !_previousKeyboardState.IsKeyDown(Keys.Space) && _bulletPositions.Count < 5)
+                        {
+                            _laserEffect.Play();
+                            _bulletPositions.Add(new Vector2(_playerPosition.X + _playerTexture.Width * 0.3f, _playerPosition.Y + _playerTexture.Height * 0.3f / 2));
+                            _bulletVelocities.Add(new Vector2(10, 0)); // Move bullet to the right
+                        }
+
+
+                        var playerRectangle = new Rectangle((int)_playerPosition.X + playerOffsetX, (int)_playerPosition.Y + playerOffsetY, playerAdjustedWidth, playerAdjustedHeight);
+
+                        // Update bullets
+                        for (int i = 0; i < _bulletPositions.Count; i++)
+                        {
+                            _bulletPositions[i] += _bulletVelocities[i];
+
+                            // Remove bullets that are off-screen
+                            if (_bulletPositions[i].X > GraphicsDevice.Viewport.Width)
+                            {
+                                _bulletPositions.RemoveAt(i);
+                                _bulletVelocities.RemoveAt(i);
+                                i--;
+                            }
+                        }
+
+
+                        // Update bullets
+                        for (int i = 0; i < _bulletPositions.Count; i++)
+                        {
+                            _bulletPositions[i] += _bulletVelocities[i];
+
+                            // Remove bullets that are off-screen
+                            if (_bulletPositions[i].X > GraphicsDevice.Viewport.Width)
+                            {
+                                _bulletPositions.RemoveAt(i);
+                                _bulletVelocities.RemoveAt(i);
+                                i--;
+                            }
+                        }
+
+                        // Update lasers
+                        for (int i = 0; i < _laserPositions.Count; i++)
+                        {
+                            _laserPositions[i] += _laserVelocities[i];
+
+                            // Remove lasers that are off-screen
+                            if (_laserPositions[i].X < 0)
+                            {
+                                _laserPositions.RemoveAt(i);
+                                _laserVelocities.RemoveAt(i);
+                                i--;
+                            }
+                        }
+
+                        // Check for laser collision with player
+                        for (int i = _laserPositions.Count - 1; i >= 0; i--)
+                        {
+                            var laserRectangle = new Rectangle((int)_laserPositions[i].X, (int)_laserPositions[i].Y, _laserTexture.Width, _laserTexture.Height);
+                            if (playerRectangle.Intersects(laserRectangle))
+                            {
+                                _laserPositions.RemoveAt(i);
+                                _laserVelocities.RemoveAt(i);
+                                _playerHealth -= 5; // Each laser does 5 damage
+
+                                if (_playerHealth <= 0)
+                                {
+                                    _playerLives--;
+                                    _playerHealth = 300; // Reset player health
+                                    if (_playerLives <= 0)
+                                    {
+                                        _explosionEffect.Play();
+                                        // Game over logic here
+                                    }
+                                }
+                            }
+                        }
+
+
+
+                        // Update enemy 1
+                        if (_enemyActive)
+                        {
+                            _enemyPosition += _enemyVelocity;
+
+                            // Reverse direction when reaching the top or bottom of the game frame
+                            if (_enemyPosition.Y <= 0 || _enemyPosition.Y >= GraphicsDevice.Viewport.Height - _enemyTexture.Height / 2)
+                            {
+                                _enemyVelocity.Y *= -1; // Reverse direction
+                            }
+
+                            // Enemy shooting randomly
+                            if (_random.NextDouble() < 0.05)
+                            {
+                                _bulletEffect.Play();
+                                _laserPositions.Add(new Vector2(_enemyPosition.X, _enemyPosition.Y + _enemyTexture.Height * 0.3f / 2));
+                                _laserVelocities.Add(new Vector2(-10, 0)); // Move laser to the left
+                            }
+
+                            // Check for bullet collision with enemy
+                            var enemyRectangle = new Rectangle((int)_enemyPosition.X + offsetX, (int)_enemyPosition.Y + offsetY, adjustedWidth, adjustedHeight);
+
+                            for (int i = 0; i < _bulletPositions.Count; i++)
+                            {
+                                var bulletRectangle = new Rectangle((int)_bulletPositions[i].X, (int)_bulletPositions[i].Y, _bulletTexture.Width, _bulletTexture.Height);
+                                if (enemyRectangle.Intersects(bulletRectangle))
+                                {
+                                    _bulletPositions.RemoveAt(i);
+                                    _bulletVelocities.RemoveAt(i);
+                                    _enemyHealth -= 20; // Each bullet does 20 damage
+                                    i--;
+                                    if (_enemyHealth <= 0)
+                                    {
+                                        _explosionEffect.Play();
+                                        _enemyActive = false;
+                                        _score += 50; // Add score when enemy is defeated
+
+                                        // Activate enemy 2 when enemy 1 is defeated
+                                        _enemyActive2 = true;
+                                        _enemyPosition2 = new Vector2(GraphicsDevice.Viewport.Width + 100, _enemyPosition2.Y);
+                                        _currentState = GameState.Intro;
+                                        _introTimer = 0f;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Update enemy 2
+                        if (_enemyActive2)
+                        {
+                            _enemyPosition2 += _enemyVelocity2;
+
+                            // Reverse direction when reaching the top or bottom of the game frame
+                            if (_enemyPosition2.Y <= 0 || _enemyPosition2.Y >= GraphicsDevice.Viewport.Height - _enemyTexture2.Height / 2)
+                            {
+                                _enemyVelocity2.Y *= -1; // Reverse direction
+                            }
+
+                            // Enemy shooting randomly
+                            if (_random.NextDouble() < 0.06)
+                            {
+                                _bulletEffect.Play();
+                                _laserPositions.Add(new Vector2(_enemyPosition2.X, _enemyPosition2.Y + _enemyTexture2.Height * 0.3f / 2));
+                                _laserVelocities.Add(new Vector2(-10, 0)); // Move laser to the left
+                            }
+
+                            // Check for bullet collision with enemy 2
+                            var enemyRectangle2 = new Rectangle((int)_enemyPosition2.X + offsetX, (int)_enemyPosition2.Y + offsetY, adjustedWidth, adjustedHeight);
+                            for (int i = 0; i < _bulletPositions.Count; i++)
+                            {
+                                var bulletRectangle = new Rectangle((int)_bulletPositions[i].X, (int)_bulletPositions[i].Y, _bulletTexture.Width, _bulletTexture.Height);
+                                if (enemyRectangle2.Intersects(bulletRectangle))
+                                {
+                                    _bulletPositions.RemoveAt(i);
+                                    _bulletVelocities.RemoveAt(i);
+                                    _enemyHealth2 -= 20; // Each bullet does 20 damage
+                                    i--;
+                                    if (_enemyHealth2 <= 0)
+                                    {
+                                        _explosionEffect.Play();
+                                        _enemyActive2 = false;
+                                        _score += 50; // Add score when enemy is defeated
+
+                                        // Activate enemy 3 when enemy 2 is defeated
+                                        _enemyActive3 = true;
+                                        _enemyActive3 = true;
+                                        _enemyPosition3 = new Vector2(GraphicsDevice.Viewport.Width + 100, _enemyPosition3.Y);
+                                        _currentState = GameState.Intro;
+                                        _introTimer = 0f;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Update enemy 3
+                        if (_enemyActive3)
+                        {
+                            _enemyPosition3 += _enemyVelocity3;
+
+                            // Reverse direction when reaching the top or bottom of the game frame
+                            if (_enemyPosition3.Y <= 0 || _enemyPosition3.Y >= GraphicsDevice.Viewport.Height - _enemyTexture3.Height / 2)
+                            {
+                                _enemyVelocity3.Y *= -1; // Reverse direction
+                            }
+
+                            // Enemy shooting randomly
+                            if (_random.NextDouble() < 0.07)
+                            {
+                                _bulletEffect.Play();
+                                _laserPositions.Add(new Vector2(_enemyPosition3.X, _enemyPosition3.Y + _enemyTexture3.Height * 0.3f / 2));
+                                _laserVelocities.Add(new Vector2(-10, 0)); // Move laser to the left
+                            }
+
+                            // Check for bullet collision with enemy 3
+                            var enemyRectangle3 = new Rectangle((int)_enemyPosition3.X + offsetX, (int)_enemyPosition3.Y + offsetY, adjustedWidth, adjustedHeight);
+                            for (int i = 0; i < _bulletPositions.Count; i++)
+                            {
+                                var bulletRectangle = new Rectangle((int)_bulletPositions[i].X, (int)_bulletPositions[i].Y, _bulletTexture.Width, _bulletTexture.Height);
+                                if (enemyRectangle3.Intersects(bulletRectangle))
+                                {
+                                    _bulletPositions.RemoveAt(i);
+                                    _bulletVelocities.RemoveAt(i);
+                                    _enemyHealth3 -= 20; // Each bullet does 20 damage
+                                    i--;
+                                    if (_enemyHealth3 <= 0)
+                                    {
+                                        _explosionEffect.Play();
+                                        _enemyActive3 = false;
+                                        _score += 50; // Add score when enemy is defeated
+
+                                        // Activate boss when enemy 3 is defeated
+                                        _bossActive = true;
+                                        _bossActive = true;
+                                        _bossPosition = new Vector2(GraphicsDevice.Viewport.Width + 100, _bossPosition.Y);
+                                        _currentState = GameState.Intro;
+                                        _introTimer = 0f;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Scaling factor for the asteroid
+                        float asteroidScale = 0.2f; // Adjust the scale as needed (0.5f means half the size)
+                        float spawnRate = 0.04f; // Adjust the spawn rate as needed
+
+                        // Randomly spawn asteroids
+                        if (_random.NextDouble() < spawnRate)
+                        {
+                            // Spawn position at the right side of the screen
+                            Vector2 asteroidPosition = new Vector2(GraphicsDevice.Viewport.Width, _random.Next(GraphicsDevice.Viewport.Height - (int)(_asteroidTexture.Height * asteroidScale)));
+                            // Velocity to move left
+                            Vector2 asteroidVelocity = new Vector2(-5, 0); // Adjust the speed as needed
+
+                            _asteroidPositions.Add(asteroidPosition);
+                            _asteroidVelocities.Add(asteroidVelocity);
+                        }
+
+
+                        // Update asteroids
+                        // Update asteroids
+                        for (int i = 0; i < _asteroidPositions.Count; i++)
+                        {
+                            _asteroidPositions[i] += _asteroidVelocities[i];
+
+                            // Remove asteroids that are off-screen
+                            if (_asteroidPositions[i].X < -_asteroidTexture.Width * asteroidScale)
+                            {
+                                _asteroidPositions.RemoveAt(i);
+                                _asteroidVelocities.RemoveAt(i);
+                                i--;
+                            }
+                            else
+                            {
+                                // Check for collision with player
+                                var asteroidRectangle = new Rectangle((int)_asteroidPositions[i].X, (int)_asteroidPositions[i].Y, (int)(_asteroidTexture.Width * asteroidScale), (int)(_asteroidTexture.Height * asteroidScale));
+                                if (playerRectangle.Intersects(asteroidRectangle))
+                                {
+                                    _playerHealth -= AsteroidDamage;
+                                    _asteroidPositions.RemoveAt(i);
+                                    _asteroidVelocities.RemoveAt(i);
+                                    i--;
+
+                                }
+                            }
+                        }
+                        // Update bullets
+                        for (int i = 0; i < _bulletPositions.Count; i++)
+                        {
+                            _bulletPositions[i] += _bulletVelocities[i];
+
+                            // Remove bullets that are off-screen
+                            if (_bulletPositions[i].X < 0 || _bulletPositions[i].X > GraphicsDevice.Viewport.Width ||
+                                _bulletPositions[i].Y < 0 || _bulletPositions[i].Y > GraphicsDevice.Viewport.Height)
+                            {
+                                _bulletPositions.RemoveAt(i);
+                                _bulletVelocities.RemoveAt(i);
+                                i--;
+                            }
+                            else
+                            {
+                                // Check for collision with asteroids
+                                var bulletRectangle = new Rectangle((int)_bulletPositions[i].X, (int)_bulletPositions[i].Y, _bulletTexture.Width, _bulletTexture.Height);
+
+                                for (int j = 0; j < _asteroidPositions.Count; j++)
+                                {
+                                    var asteroidRectangle = new Rectangle((int)_asteroidPositions[j].X, (int)_asteroidPositions[j].Y, (int)(_asteroidTexture.Width * asteroidScale), (int)(_asteroidTexture.Height * asteroidScale));
+
+                                    if (bulletRectangle.Intersects(asteroidRectangle))
+                                    {
+                                        _bulletPositions.RemoveAt(i);
+                                        _bulletVelocities.RemoveAt(i);
+                                        i--;
+
+                                        // Asteroid takes damage
+                                        // Example: Reduce asteroid health or remove asteroid from list if health <= 0
+                                        // For simplicity, let's remove the asteroid
+                                        _asteroidPositions.RemoveAt(j);
+                                        _asteroidVelocities.RemoveAt(j);
+                                        j--;
+
+                                        // Add score for destroying asteroid
+                                        _score += 10; // Adjust score as needed
+
+                                        break; // Break out of asteroid loop after handling collision
+                                    }
+                                }
+                            }
+                        }
+
+
+
+                        // Update boss
+                        if (_bossActive)
+                        {
+                            _bossPosition += _bossVelocity;
+
+                            // Reverse direction when reaching the top or bottom of the game frame
+                            if (_bossPosition.Y <= 0 || _bossPosition.Y >= GraphicsDevice.Viewport.Height - _bossTexture.Height / 2)
+                            {
+                                _bossVelocity.Y *= -1; // Reverse direction
+                            }
+
+                            // Boss shooting randomly
+                            if (_random.NextDouble() < 0.1)
+                            {
+                                _laserPositions.Add(new Vector2(_bossPosition.X, _bossPosition.Y + _bossTexture.Height * 0.3f / 2));
+                                _laserVelocities.Add(new Vector2(-10, 0)); // Move laser to the left
+                            }
+
+                            // Check for bullet collision with boss
+                            var bossRectangle = new Rectangle((int)_bossPosition.X + offsetX2, (int)_bossPosition.Y + offsetY2, adjustedWidth2, adjustedHeight2);
+                            for (int i = 0; i < _bulletPositions.Count; i++)
+                            {
+                                var bulletRectangle = new Rectangle((int)_bulletPositions[i].X, (int)_bulletPositions[i].Y, _bulletTexture.Width, _bulletTexture.Height);
+                                if (bossRectangle.Intersects(bulletRectangle))
+                                {
+                                    _bulletEffect.Play();
+                                    _bulletPositions.RemoveAt(i);
+                                    _bulletVelocities.RemoveAt(i);
+                                    _bossHealth -= 20; // Each bullet does 20 damage
+                                    i--;
+                                    if (_bossHealth <= 0)
+                                    {
+                                        _explosionEffect.Play();
+                                        _bossActive = false;
+                                        _score += 100; // Add score when boss is defeated
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Update lasers
+                        for (int i = 0; i < _laserPositions.Count; i++)
+                        {
+                            _laserPositions[i] += _laserVelocities[i];
+
+                            // Remove lasers that are off-screen
+                            if (_laserPositions[i].X < 0)
+                            {
+                                _laserPositions.RemoveAt(i);
+                                _laserVelocities.RemoveAt(i);
+                                i--;
+                            }
+                        }
+
+                        break;
+                }
+
+            // Check for input to freeze the game on congratulations or game over screens
+
+            if (_bossHealth == 0 || _playerLives == 0)
+            {
+                // Freeze the game
+                _gameFrozen = true;
+
+                if (keyboardState.IsKeyDown(Keys.Enter) && !_previousKeyboardState.IsKeyDown(Keys.Enter))
+                {
+                    // Reset game state
+                    Initialize();
+                }
+            }
+
+            // Update previous keyboard state
+            _previousKeyboardState = keyboardState;
+
+            base.Update(gameTime);
+        }
+
+
+
+
+
+        protected override void Draw(GameTime gameTime)
+        {
+            GraphicsDevice.Clear(Color.CornflowerBlue);
+
+            _spriteBatch.Begin();
+            _spriteBatch.Draw(_backgroundTexture, new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height), Color.White);
+
+            // Draw player (scaled down to 50%)
+            _spriteBatch.Draw(_playerTexture, _playerPosition, null, Color.White, 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
+
+            DrawHealthBar(_spriteBatch, new Vector2(_playerPosition.X + _playerTexture.Width * 0f, _playerPosition.Y - 1), _playerHealth, 300, 5, 100, Color.LightGreen);
+
+            // Draw bullets
+            foreach (var bulletPosition in _bulletPositions)
+            {
+                _spriteBatch.Draw(_bulletTexture, bulletPosition, null, Color.White, 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
+            }
+
+            // Draw lasers
+            foreach (var laserPosition in _laserPositions)
+            {
+                _spriteBatch.Draw(_laserTexture, laserPosition, null, Color.Red, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
+            }
+
+            // Draw enemy 1 (scaled down to 50%)
+            if (_enemyActive)
+            {
+                _spriteBatch.Draw(_enemyTexture, _enemyPosition, null, Color.White, 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
+
+                EnemyDrawHealthBar(_spriteBatch, new Vector2(_enemyPosition.X, _enemyPosition.Y + _enemyTexture.Height * 0.35f), _enemyHealth, 300, 100, 5, Color.Yellow);
+
+            }
+
+            // Draw enemy 2 (scaled down to 50%)
+            if (_enemyActive2)
+            {
+                _spriteBatch.Draw(_enemyTexture2, _enemyPosition2, null, Color.White, 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
+                EnemyDrawHealthBar(_spriteBatch, new Vector2(_enemyPosition2.X + -10, _enemyPosition2.Y + _enemyTexture2.Height * 0.35f), _enemyHealth2, 400, 100, 5, Color.Yellow);
+            }
+
+            // Draw enemy 3 (scaled down to 50%)
+            if (_enemyActive3)
+            {
+                _spriteBatch.Draw(_enemyTexture3, _enemyPosition3, null, Color.White, 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
+                EnemyDrawHealthBar(_spriteBatch, new Vector2(_enemyPosition3.X + 15, _enemyPosition3.Y + _enemyTexture3.Height * 0.35f), _enemyHealth3, 500, 100, 5, Color.Yellow);
+            }
+
+            // Draw boss
+            if (_bossActive)
+            {
+                _spriteBatch.Draw(_bossTexture, _bossPosition, null, Color.White, 0f, Vector2.Zero, 0.7f, SpriteEffects.None, 0f);
+                EnemyDrawHealthBar(_spriteBatch, new Vector2(_bossPosition.X + 60, _bossPosition.Y + _bossTexture.Height * 0.8f), _bossHealth, 700, 100, 5, Color.Yellow);
+            }
+
+            // Draw asteroids
+            foreach (var asteroidPosition in _asteroidPositions)
+            {
+                _spriteBatch.Draw(_asteroidTexture, asteroidPosition, null, Color.White, 0f, Vector2.Zero, asteroidScale, SpriteEffects.None, 0f);
+            }
+
+            if (_bossHealth == 0)
+            {
+                DrawCongratulationsScreen();
+            }
+
+            if (_playerLives == 0)
+            {
+                DrawGameOverScreen();
+
+
+            }
+
+            int hudY = GraphicsDevice.Viewport.Height - 25;
+            // Draw HUD
+            _spriteBatch.DrawString(_font, $"Score: {_score}    Health: {_playerHealth}    Lives: {_playerLives}",
+            new Vector2(250, hudY), Color.White);
+
+            _spriteBatch.End();
+
+            base.Draw(gameTime);
+        }
+        private void DrawCongratulationsScreen()
+        {
+            _spriteBatch.DrawString(_font, "Congratulations!", CalculateCenteredPosition("Congratulations!", _font), Color.White);
+            _spriteBatch.DrawString(_font, $"Score: {_score}", CalculateCenteredPosition($"Score: {_score}", _font, yOffset: 20), Color.White);
+            _spriteBatch.DrawString(_font, $"Health: {_playerHealth}", CalculateCenteredPosition($"Health: {_playerHealth}", _font, yOffset: 40), Color.White);
+            _spriteBatch.DrawString(_font, $"Lives: {_playerLives}", CalculateCenteredPosition($"Lives: {_playerLives}", _font, yOffset: 60), Color.White);
+            _spriteBatch.DrawString(_font, "Play Again? (Press Enter)", CalculateCenteredPosition("Play Again? (Press Enter)", _font, yOffset: 100), Color.White);
+
+
+            var keyboardState = Keyboard.GetState();
+            if (keyboardState.IsKeyDown(Keys.Enter) && !_previousKeyboardState.IsKeyDown(Keys.Enter))
+            {
+                // Reset game state
+                Initialize();
+            }
+        }
+
+        private void DrawGameOverScreen()
+        {
+            _spriteBatch.DrawString(_font, "Game Over", CalculateCenteredPosition("Game Over", _font), Color.White);
+            _spriteBatch.DrawString(_font, $"Score: {_score}", CalculateCenteredPosition($"Score: {_score}", _font, yOffset: 20), Color.White);
+            _spriteBatch.DrawString(_font, $"Health: {_playerHealth}", CalculateCenteredPosition($"Health: {_playerHealth}", _font, yOffset: 40), Color.White);
+            _spriteBatch.DrawString(_font, $"Lives: {_playerLives}", CalculateCenteredPosition($"Lives: {_playerLives}", _font, yOffset: 60), Color.White);
+            _spriteBatch.DrawString(_font, "Play Again? (Press Enter)", CalculateCenteredPosition("Play Again? (Press Enter)", _font, yOffset: 100), Color.White);
+
+            var keyboardState = Keyboard.GetState();
+            if (keyboardState.IsKeyDown(Keys.Enter) && !_previousKeyboardState.IsKeyDown(Keys.Enter))
+            {
+                // Reset game state
+                Initialize();
+            }
+        }
+
+        private Vector2 CalculateCenteredPosition(string text, SpriteFont font, float yOffset = 0)
+        {
+            Vector2 textSize = font.MeasureString(text);
+            float x = (GraphicsDevice.Viewport.Width - textSize.X) / 2;
+            float y = (GraphicsDevice.Viewport.Height - textSize.Y) / 2 + yOffset;
+            return new Vector2(x, y);
+        }
+
+    }
+}

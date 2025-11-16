@@ -1,0 +1,226 @@
+using System.Collections;
+using UnityEngine;
+using UnityEngine.AI;
+
+public abstract class GhostAI : MonoBehaviour
+{
+    [Header("Ghost Settings")]
+    [SerializeField] protected float moveSpeed = 3f;
+    [SerializeField] protected float activationDelay = 0f;
+    [SerializeField] protected bool isActive = false;
+    
+    [Header("References")]
+    [SerializeField] protected Transform player;
+    [SerializeField] protected MazeGenerator mazeGenerator;
+    
+    // Ghost states
+    public enum GhostState
+    {
+        Inactive,
+        Chasing,
+        Scattering,
+        Returning
+    }
+    
+    protected GhostState currentState = GhostState.Inactive;
+    protected NavMeshAgent agent;
+    protected Vector3 spawnPosition;
+    protected Vector3 currentTargetPosition;
+    
+    // Ghost house / spawn area
+    protected Vector3 ghostHousePosition;
+    
+    protected virtual void Start()
+    {
+        // Get components
+        agent = GetComponent<NavMeshAgent>();
+        if (agent == null)
+        {
+            agent = gameObject.AddComponent<NavMeshAgent>();
+        }
+        
+        // Configure NavMeshAgent
+        agent.speed = moveSpeed;
+        agent.acceleration = 8f;
+        agent.angularSpeed = 120f;
+        agent.stoppingDistance = 0.1f;
+        
+        // Store spawn position
+        spawnPosition = transform.position;
+        ghostHousePosition = spawnPosition;
+        
+        // Find player if not assigned
+        if (player == null)
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            if (playerObject != null)
+            {
+                player = playerObject.transform;
+            }
+        }
+        
+        // Find maze generator if not assigned
+        if (mazeGenerator == null)
+        {
+            mazeGenerator = FindFirstObjectByType<MazeGenerator>();
+        }
+        
+        // Start activation coroutine
+        StartCoroutine(ActivateAfterDelay());
+    }
+    
+    protected virtual void Update()
+    {
+        if (!isActive || player == null) return;
+        
+        // Update AI behavior based on current state
+        UpdateAI();
+        
+        // Update movement
+        UpdateMovement();
+    }
+    
+    protected virtual void UpdateAI()
+    {
+        switch (currentState)
+        {
+            case GhostState.Inactive:
+                // Do nothing, wait for activation
+                break;
+                
+            case GhostState.Chasing:
+                UpdateChasingBehavior();
+                break;
+                
+            case GhostState.Scattering:
+                UpdateScatteringBehavior();
+                break;
+                
+            case GhostState.Returning:
+                UpdateReturningBehavior();
+                break;
+        }
+    }
+    
+    protected virtual void UpdateMovement()
+    {
+        if (agent != null && agent.isActiveAndEnabled)
+        {
+            // Move towards current target
+            if (Vector3.Distance(transform.position, currentTargetPosition) > 0.5f)
+            {
+                agent.SetDestination(currentTargetPosition);
+            }
+        }
+    }
+    
+    protected abstract void UpdateChasingBehavior();
+    protected abstract void UpdateScatteringBehavior();
+    
+    protected virtual void UpdateReturningBehavior()
+    {
+        // Return to ghost house
+        currentTargetPosition = ghostHousePosition;
+        
+        // If close to ghost house, switch to chasing
+        if (Vector3.Distance(transform.position, ghostHousePosition) < 1f)
+        {
+            currentState = GhostState.Chasing;
+        }
+    }
+    
+    protected virtual IEnumerator ActivateAfterDelay()
+    {
+        yield return new WaitForSeconds(activationDelay);
+        ActivateGhost();
+    }
+    
+    protected virtual void ActivateGhost()
+    {
+        isActive = true;
+        currentState = GhostState.Chasing;
+        Debug.Log($"{gameObject.name} ghost activated!");
+    }
+    
+    // Utility methods for all ghosts
+    protected Vector3 GetRandomScatterPosition()
+    {
+        if (mazeGenerator == null) return transform.position;
+        
+        Vector2Int mazeDimensions = mazeGenerator.GetMazeDimensions();
+        float cellSize = mazeGenerator.GetCellSize();
+        
+        // Find a random floor position
+        for (int attempts = 0; attempts < 20; attempts++)
+        {
+            int randomX = Random.Range(1, mazeDimensions.x - 1);
+            int randomY = Random.Range(1, mazeDimensions.y - 1);
+            
+            if (mazeGenerator.GetCellType(randomX, randomY) == MazeGenerator.CellType.Floor)
+            {
+                return new Vector3(randomX * cellSize, transform.position.y, randomY * cellSize);
+            }
+        }
+        
+        return spawnPosition;
+    }
+    
+    protected Vector3 GetPlayerPosition()
+    {
+        return player != null ? player.position : transform.position;
+    }
+    
+    protected Vector3 GetPlayerDirection()
+    {
+        if (player == null) return Vector3.forward;
+        
+        // Try to get player's forward direction
+        if (player.GetComponent<Rigidbody>() != null)
+        {
+            Vector3 velocity = player.GetComponent<Rigidbody>().linearVelocity;
+            if (velocity.magnitude > 0.1f)
+            {
+                return velocity.normalized;
+            }
+        }
+        
+        return player.forward;
+    }
+    
+    protected float GetDistanceToPlayer()
+    {
+        return player != null ? Vector3.Distance(transform.position, player.position) : float.MaxValue;
+    }
+    
+    // State management
+    public void SetState(GhostState newState)
+    {
+        currentState = newState;
+    }
+    
+    public GhostState GetState()
+    {
+        return currentState;
+    }
+    
+    public bool IsActive()
+    {
+        return isActive;
+    }
+    
+    // Debug
+    protected virtual void OnDrawGizmosSelected()
+    {
+        // Draw current target
+        if (currentTargetPosition != Vector3.zero)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(currentTargetPosition, 0.5f);
+            Gizmos.DrawLine(transform.position, currentTargetPosition);
+        }
+        
+        // Draw ghost house
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireCube(ghostHousePosition, Vector3.one);
+    }
+}
