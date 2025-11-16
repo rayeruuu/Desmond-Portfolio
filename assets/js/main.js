@@ -827,7 +827,11 @@ function openProjectModal(index){
   for (const src of imgs){
     const s = document.createElement('div'); s.className = 'slide';
     if (useContain) s.classList.add('slide-contain');
-    const img = document.createElement('img'); img.src = src; img.alt = `${currentProject.title} image`; img.loading='lazy'; img.decoding='async';
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = `${currentProject.title} image`;
+    img.loading = 'eager'; // modal slides render hidden first, so force eager loading for mobile reliability
+    img.decoding = 'async';
     s.appendChild(img); slides.push(s);
   }
   if (video){
