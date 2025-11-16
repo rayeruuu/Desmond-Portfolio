@@ -91,7 +91,39 @@ const PROJECTS = [
         "assets/images/projects/unity/Bricks/bricks (1).png",
         "assets/images/projects/unity/Bricks/bricks (2).png"
       ],
-      video: null
+      video: "https://drive.google.com/file/d/1D1E4TB_rrxuAILsILRqQ-Wj514YwBby5/preview"
+    },
+    snippets: []
+  },
+  {
+    title: "Isolation Protocol",
+    category: "Unity",
+    description: "Mobile FPS set in a neon training facility where defeating mannequins unlocks the boss chamber.",
+    longDescription: "This Unity-made mobile first-person shooter takes place inside a futuristic sci-fi firing range designed as a combat simulation chamber. Players must navigate neon-lit corridors, collect ammo from glowing supply pads, and eliminate ten hostile training mannequins scattered across the arena. Each mannequin behaves like a lightweight enemy drone, moving, dodging, or firing back with basic energy shots. Once all ten are defeated, the sealed blast doors unlock, granting access to the boss room where the real challenge begins.",
+    contribution: "Developed all game mechanics, mobile controls, and the overall core program functionality for the project.",
+    featureList: [
+      "Sci-fi firing range environment",
+      "Ten reactive combat mannequins to eliminate",
+      "Unlockable boss room after all mannequins are defeated",
+      "Multiple futuristic weapons",
+      "Ammo and health stations",
+      "Smooth and responsive Unity FPS mobile controls",
+      "Optimized performance for mobile devices",
+      "Dynamic lighting and VFX for an immersive but lightweight experience"
+    ],
+    techChips: ["Unity", "C#", "FPS", "Mobile"],
+    tags: ["Unity", "Shooter", "Mobile"],
+    links: { demo: "#", github: "#" },
+    image: "assets/images/projects/unity/Isolation Protocol/Iso.jpg",
+    media: {
+      images: [
+        "assets/images/projects/unity/Isolation Protocol/Iso.jpg",
+        "assets/images/projects/unity/Isolation Protocol/Iso2.jpg",
+        "assets/images/projects/unity/Isolation Protocol/Iso3.jpg",
+        "assets/images/projects/unity/Isolation Protocol/Iso4.jpg",
+        "assets/images/projects/unity/Isolation Protocol/Iso5.jpg"
+      ],
+      video: "https://drive.google.com/file/d/1Au0cSsMGTSm7cQOTyQjkv_Q6Ui4Ib8kS/preview"
     },
     snippets: []
   },
