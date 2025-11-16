@@ -289,7 +289,8 @@ h2 { font-size: clamp(1.5rem, 2vw + 1rem, 2rem); }
   z-index: 5;
 }
 .code-dropdown:hover .code-dropdown__menu,
-.code-dropdown:focus-within .code-dropdown__menu {
+.code-dropdown:focus-within .code-dropdown__menu,
+.code-dropdown.is-open .code-dropdown__menu {
   opacity: 1;
   visibility: visible;
   transform: translateX(0) scale(1);
@@ -589,10 +590,10 @@ input:focus, textarea:focus, .btn:focus, .filter:focus { outline: 2px solid tran
 .btn-small { font-size: 0.85rem; padding: 0.4rem 0.8rem; }
 
 /* Code overlay */
-.code-overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 60; color: var(--code-text); padding: 0; }
+.code-overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 60; color: var(--code-text); padding: 1.5rem; }
 .code-overlay[aria-hidden="false"] { display: flex; }
 .code-overlay .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(3px); }
-.code-overlay .dialog { position: relative; width: min(1600px, 100vw); height: min(1100px, 100vh); background: var(--code-bg); border: 1px solid var(--ring); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 30px 80px rgba(0,0,0,0.65); color: var(--code-text); }
+.code-overlay .dialog { position: relative; width: min(1400px, calc(100vw - 3rem)); height: min(1000px, calc(100vh - 3rem)); background: var(--code-bg); border: 1px solid var(--ring); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 30px 80px rgba(0,0,0,0.65); color: var(--code-text); }
 .code-overlay .dialog::after { content: ""; position: absolute; inset: 0; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; pointer-events: none; opacity: 0.6; }
 .code-overlay header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; border-bottom: 1px solid var(--ring); font-weight: 600; }
 .code-overlay header span { color: var(--muted); font-weight: 400; font-size: 0.9rem; }
@@ -600,3 +601,16 @@ input:focus, textarea:focus, .btn:focus, .filter:focus { outline: 2px solid tran
 .code-overlay pre { flex: 1; margin: 0; background: var(--code-bg); border: none; border-top: 1px solid var(--ring); padding: 1.25rem 2rem; overflow: auto; color: var(--code-text); }
 .code-overlay code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 1.05rem; line-height: 1.55; color: var(--code-text); white-space: pre; display: block; }
 .code-overlay iframe { flex: 1; width: 100%; border: 0; background: var(--code-bg); }
+
+@media (max-width: 900px) {
+  .code-overlay { padding: 0.75rem; }
+  .code-overlay .dialog { width: 100%; height: calc(100vh - 1.5rem); }
+}
+
+@media (max-width: 720px) {
+  .code-overlay { padding: 0; align-items: flex-start; }
+  .code-overlay .dialog { width: 100vw; height: 100vh; border-radius: 0; }
+  .code-overlay header { flex-wrap: wrap; gap: 0.5rem; }
+  .code-overlay pre { padding: 1rem; }
+  .code-overlay code { font-size: 0.9rem; line-height: 1.4; }
+}

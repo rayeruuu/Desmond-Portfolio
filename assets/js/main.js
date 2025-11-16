@@ -684,6 +684,22 @@ const codeOverlayPre = document.getElementById('codeOverlayPre');
 const codeOverlayContent = document.getElementById('codeOverlayContent');
 const codeOverlayFrame = document.getElementById('codeOverlayFrame');
 const codeOverlayTitle = document.getElementById('codeOverlayTitle');
+let activeCodeDropdown = null;
+
+function closeActiveCodeDropdown(target){
+  const dropdown = target || activeCodeDropdown;
+  if (!dropdown) return;
+  dropdown.classList.remove('is-open');
+  const triggerBtn = dropdown.querySelector('.code-dropdown__trigger');
+  if (triggerBtn) triggerBtn.setAttribute('aria-expanded','false');
+  if (dropdown === activeCodeDropdown) activeCodeDropdown = null;
+}
+
+document.addEventListener('click', (e) => {
+  if (activeCodeDropdown && !activeCodeDropdown.contains(e.target)) {
+    closeActiveCodeDropdown();
+  }
+});
 
 function lockScroll(){ document.body.style.overflow = 'hidden'; }
 function unlockScroll(){
@@ -801,6 +817,7 @@ function openProjectModal(index){
       item.textContent = getSnippetLabel(snippet, `Snippet ${idx + 1}`);
       item.setAttribute('role', 'menuitem');
       item.addEventListener('click', () => {
+        closeActiveCodeDropdown(dropdown);
         showProjectCode(currentProject, snippet);
       });
       menu.appendChild(item);
@@ -809,11 +826,38 @@ function openProjectModal(index){
     dropdown.appendChild(menu);
 
     const setExpanded = (state) => trigger.setAttribute('aria-expanded', state ? 'true' : 'false');
+    const toggleDropdown = () => {
+      const willOpen = activeCodeDropdown !== dropdown;
+      if (activeCodeDropdown && activeCodeDropdown !== dropdown) closeActiveCodeDropdown();
+      if (willOpen) {
+        dropdown.classList.add('is-open');
+        activeCodeDropdown = dropdown;
+        setExpanded(true);
+      } else {
+        closeActiveCodeDropdown(dropdown);
+      }
+    };
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleDropdown();
+    });
+
+    dropdown.addEventListener('click', (e) => e.stopPropagation());
+    dropdown.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeActiveCodeDropdown(dropdown);
+        trigger.focus();
+      }
+    });
+
     dropdown.addEventListener('mouseenter', () => setExpanded(true));
-    dropdown.addEventListener('mouseleave', () => setExpanded(false));
+    dropdown.addEventListener('mouseleave', () => {
+      if (activeCodeDropdown !== dropdown) setExpanded(false);
+    });
     dropdown.addEventListener('focusin', () => setExpanded(true));
     dropdown.addEventListener('focusout', (e) => {
-      if (!dropdown.contains(e.relatedTarget)) setExpanded(false);
+      if (!dropdown.contains(e.relatedTarget) && activeCodeDropdown !== dropdown) setExpanded(false);
     });
 
     modalLinks.appendChild(dropdown);
@@ -865,6 +909,7 @@ function closeProjectModal(){
   unlockScroll();
   slidesEl.innerHTML='';
   currentProject = null; currentSlide = 0;
+  closeActiveCodeDropdown();
   stopAutoplay();
 }
 
