@@ -242,6 +242,12 @@ h2 { font-size: clamp(1.5rem, 2vw + 1rem, 2rem); }
 .tag { font-size: 0.75rem; color: var(--muted); border: 1px dashed var(--ring); border-radius: 999px; padding: 0.2rem 0.5rem; }
 .card-links { margin-top: auto; padding-top: 0.5rem; display: flex; gap: 0.5rem; }
 .card-links a { text-decoration: none; }
+.modal-side #modalLinks {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  padding-top: 0;
+  flex-wrap: wrap;
+}
 .card-links .btn,
 #modalLinks .btn {
   box-sizing: border-box;
@@ -255,6 +261,54 @@ h2 { font-size: clamp(1.5rem, 2vw + 1rem, 2rem); }
   text-align: center;
   font-weight: 600;
   letter-spacing: .25px;
+}
+
+.code-dropdown {
+  position: relative;
+  flex: 0 0 var(--action-btn-width);
+}
+.code-dropdown .btn {
+  width: 100%;
+}
+.code-dropdown__menu {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 8px);
+  min-width: max(var(--action-btn-width), 180px);
+  background: var(--surface);
+  border: 1px solid var(--ring);
+  border-radius: 12px;
+  padding: 0.3rem 0;
+  box-shadow: 0 18px 40px rgba(5,8,13,0.55);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(6px) scale(0.97);
+  transform-origin: left top;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+  z-index: 5;
+}
+.code-dropdown:hover .code-dropdown__menu,
+.code-dropdown:focus-within .code-dropdown__menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0) scale(1);
+  pointer-events: auto;
+}
+.code-dropdown__item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+}
+.code-dropdown__item:hover,
+.code-dropdown__item:focus-visible {
+  background: rgba(255,255,255,0.07);
+  outline: none;
 }
 
 /* Stack */

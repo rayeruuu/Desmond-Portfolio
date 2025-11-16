@@ -1,0 +1,1160 @@
+using UnityEngine;
+using System.Collections.Generic;
+
+[System.Serializable]
+public class AudioClipData
+{
+    public string name;
+    public AudioClip clip;
+    [Range(0f, 1f)]
+    public float volume = 1f;
+    [Range(0.1f, 3f)]
+    public float pitch = 1f;
+    public bool loop = false;
+    
+    [Header("3D Audio Settings")]
+    public bool enable3D = false;
+    [Range(0f, 500f)]
+    public float minDistance = 1f;
+    [Range(0f, 500f)]
+    public float maxDistance = 50f;
+    [Range(0f, 1f)]
+    public float spatialBlend = 1f; // 0 = 2D, 1 = 3D
+    public AudioRolloffMode rolloffMode = AudioRolloffMode.Logarithmic;
+    [Range(0f, 5f)]
+    public float dopplerLevel = 1f;
+}
+
+[System.Serializable]
+public class PositionedAmbientAudio
+{
+    [Header("Audio Settings")]
+    public string name;
+    public AudioClip clip;
+    [Range(0f, 1f)]
+    public float volume = 1f;
+    [Range(0.1f, 3f)]
+    public float pitch = 1f;
+    public bool loop = true;
+    public bool playOnStart = true;
+    
+    [Header("Positioning Mode")]
+    public bool is3D = true; // If false, plays as 2D global audio
+    
+    [Header("3D Positioning (only if is3D = true)")]
+    public GameObject sourceObject; // The GameObject that will contain the AudioSource (null for 2D)
+    [Range(1f, 100f)]
+    public float minDistance = 5f;
+    [Range(5f, 200f)]
+    public float maxDistance = 50f;
+    public AudioRolloffMode rolloffMode = AudioRolloffMode.Logarithmic;
+    [Range(0f, 5f)]
+    public float dopplerLevel = 1f;
+      [Header("Gizmo Settings (3D only)")]
+    public Color gizmoColor = Color.cyan;
+    public bool showGizmos = true;
+    
+    [Header("Gizmo Dimensions")]
+    [Range(0.5f, 5f)]
+    public float gizmoWidth = 2f;
+    [Range(0.5f, 5f)]
+    public float gizmoHeight = 1.2f;
+    [Range(0.5f, 5f)]
+    public float gizmoLength = 2f;
+    
+    [HideInInspector]
+    public AudioSource audioSource; // Will be created automatically
+    
+    // Track if settings changed for runtime updates
+    [HideInInspector]
+    public float lastVolume;
+    [HideInInspector]
+    public float lastPitch;
+    [HideInInspector]
+    public float lastMinDistance;
+    [HideInInspector]
+    public float lastMaxDistance;
+}
+
+public class AudioManager : MonoBehaviour
+{
+    public static AudioManager Instance;
+      [Header("Volume Controls")]
+    [Range(0f, 1f)]
+    public float musicVolume = 1f;
+    [Range(0f, 1f)]
+    public float ambientVolume = 1f;
+    [Range(0f, 1f)]
+    public float sfxVolume = 1.0f;
+    
+    [Header("Audio Sources")]
+    public AudioSource musicSource;
+    public AudioSource ambientSource;
+    public AudioSource sfxSource;
+    
+    [Header("3D Audio Settings")]
+    public Transform audioListener; // Usually the camera or player    [Header("Sound Effects")]
+    public AudioClipData[] soundEffects;
+    
+    [Header("Ambient Audio (2D & 3D)")]
+    [Tooltip("Unified ambient audio system - supports both 2D global and 3D positioned audio")]
+    public PositionedAmbientAudio[] ambientAudio;
+      [Header("Radio System")]
+    public AudioClipData[] radio102_10Tracks;
+    public AudioClipData[] mClassicalRadioTracks;
+    
+    // Radio state management
+    private bool radioSystemEnabled = true;
+    
+    // Dictionary for quick lookup
+    private Dictionary<string, AudioClipData> audioClips = new Dictionary<string, AudioClipData>();
+    
+    // Dictionary to track looping SFX
+    private Dictionary<string, AudioSource> loopingSFX = new Dictionary<string, AudioSource>();
+    
+    void Awake()
+    {
+        // Singleton pattern
+        if (Instance == null)
+        {
+            Instance = this;
+            InitializeAudioManager();
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+      void Start()
+    {
+        // Set default audio listener if not assigned
+        if (audioListener == null)
+        {
+            Camera mainCam = Camera.main;
+            if (mainCam != null)
+                audioListener = mainCam.transform;
+            else
+                audioListener = transform; // Fallback to AudioManager position
+        }
+        
+        // Ensure AudioListener component exists
+        EnsureAudioListener();        // Setup positioned ambient audio
+        SetupAmbientAudio();
+    }
+    
+    void Update()
+    {
+        // Check for runtime changes in ambient audio settings
+        UpdateAmbientAudioSettings();
+    }
+    
+    void InitializeAudioManager()
+    {        // Setup audio sources if not assigned
+        if (musicSource == null)
+        {
+            musicSource = gameObject.AddComponent<AudioSource>();
+            musicSource.loop = true;
+            musicSource.playOnAwake = false;
+            musicSource.spatialBlend = 0f; // Music should be 2D
+        }
+        
+        if (ambientSource == null)
+        {
+            ambientSource = gameObject.AddComponent<AudioSource>();
+            ambientSource.loop = true;
+            ambientSource.playOnAwake = false;
+            ambientSource.spatialBlend = 0f; // Ambient should be 2D
+        }
+        
+        if (sfxSource == null)
+        {
+            sfxSource = gameObject.AddComponent<AudioSource>();
+            sfxSource.playOnAwake = false;
+            sfxSource.spatialBlend = 0f; // Default SFX source is 2D
+        }
+        
+        // Apply initial volume settings
+        musicSource.volume = musicVolume;
+        ambientSource.volume = ambientVolume;
+        sfxSource.volume = sfxVolume;
+        
+        // Populate dictionary with all audio clips
+        PopulateAudioDictionary();
+        
+        // Load saved volume settings
+        LoadVolumeSettings();
+    }
+    
+    private void EnsureAudioListener()
+    {
+        if (audioListener != null)
+        {
+            // Check if AudioListener component exists, add if not
+            if (audioListener.GetComponent<AudioListener>() == null)
+            {
+                audioListener.gameObject.AddComponent<AudioListener>();
+            }
+        }
+    }
+    
+    void PopulateAudioDictionary()
+    {
+        // Clear existing dictionary
+        audioClips.Clear();
+        
+        // Add sound effects to dictionary
+        foreach (var sfx in soundEffects)
+        {
+            if (!string.IsNullOrEmpty(sfx.name) && sfx.clip != null)
+            {
+                audioClips[sfx.name] = sfx;
+            }
+        }        // Add ambient audio to dictionary (for backward compatibility with old PlayAmbient methods)
+        if (ambientAudio != null)
+        {
+            foreach (var ambient in ambientAudio)
+            {
+                if (!string.IsNullOrEmpty(ambient.name) && ambient.clip != null)
+                {
+                    // Create a temporary AudioClipData for dictionary compatibility
+                    AudioClipData clipData = new AudioClipData
+                    {
+                        name = ambient.name,
+                        clip = ambient.clip,
+                        volume = ambient.volume,
+                        pitch = ambient.pitch,
+                        loop = ambient.loop,
+                        enable3D = ambient.is3D,
+                        minDistance = ambient.minDistance,
+                        maxDistance = ambient.maxDistance,
+                        rolloffMode = ambient.rolloffMode,
+                        dopplerLevel = ambient.dopplerLevel
+                    };
+                    audioClips[ambient.name] = clipData;
+                }
+            }
+        }
+        
+        // Add radio tracks to dictionary
+        foreach (var radioTrack in radio102_10Tracks)
+        {
+            if (!string.IsNullOrEmpty(radioTrack.name) && radioTrack.clip != null)
+            {
+                audioClips["radio102_" + radioTrack.name] = radioTrack;
+            }
+        }
+        
+        foreach (var radioTrack in mClassicalRadioTracks)
+        {
+            if (!string.IsNullOrEmpty(radioTrack.name) && radioTrack.clip != null)
+            {
+                audioClips["mclassical_" + radioTrack.name] = radioTrack;
+            }
+        }
+    }
+    
+    // Play sound effect by name
+    public void PlaySFX(string soundName)
+    {
+        if (audioClips.ContainsKey(soundName))
+        {
+            AudioClipData audioData = audioClips[soundName];
+            sfxSource.pitch = audioData.pitch;
+            sfxSource.PlayOneShot(audioData.clip, audioData.volume * sfxVolume);
+        }
+        else
+        {
+            Debug.LogWarning($"AudioManager: Sound '{soundName}' not found!");
+        }
+    }
+    
+    // Play sound effect with custom volume
+    public void PlaySFX(string soundName, float customVolume)
+    {
+        if (audioClips.ContainsKey(soundName))
+        {
+            AudioClipData audioData = audioClips[soundName];
+            sfxSource.pitch = audioData.pitch;
+            sfxSource.PlayOneShot(audioData.clip, customVolume * sfxVolume);
+        }
+        else
+        {
+            Debug.LogWarning($"AudioManager: Sound '{soundName}' not found!");
+        }
+    }
+    
+    // Play background music by name
+    public void PlayMusic(string musicName)
+    {
+        if (audioClips.ContainsKey(musicName))
+        {
+            AudioClipData audioData = audioClips[musicName];
+            musicSource.clip = audioData.clip;
+            musicSource.volume = audioData.volume * musicVolume;
+            musicSource.pitch = audioData.pitch;
+            musicSource.loop = audioData.loop;
+            musicSource.Play();
+        }
+        else
+        {
+            Debug.LogWarning($"AudioManager: Music '{musicName}' not found!");
+        }
+    }
+    
+    // Stop current music
+    public void StopMusic()
+    {
+        if (musicSource.isPlaying)
+        {
+            musicSource.Stop();
+        }
+    }
+    
+    // Pause/Resume music
+    public void PauseMusic()
+    {
+        if (musicSource.isPlaying)
+        {
+            musicSource.Pause();
+        }
+    }
+    
+    public void ResumeMusic()
+    {
+        if (!musicSource.isPlaying && musicSource.clip != null)
+        {
+            musicSource.UnPause();
+        }
+    }
+    
+    // Ambient audio methods
+    // Play ambient sound by name
+    public void PlayAmbient(string ambientName)
+    {
+        if (audioClips.ContainsKey(ambientName))
+        {
+            AudioClipData audioData = audioClips[ambientName];
+            ambientSource.clip = audioData.clip;
+            ambientSource.volume = audioData.volume * ambientVolume;
+            ambientSource.pitch = audioData.pitch;
+            ambientSource.loop = audioData.loop;
+            ambientSource.Play();
+        }
+        else
+        {
+            Debug.LogWarning($"AudioManager: Ambient sound '{ambientName}' not found!");
+        }
+    }
+    
+    // Stop current ambient sound
+    public void StopAmbient()
+    {
+        if (ambientSource.isPlaying)
+        {
+            ambientSource.Stop();
+        }
+    }
+    
+    // Pause/Resume ambient sound
+    public void PauseAmbient()
+    {
+        if (ambientSource.isPlaying)
+        {
+            ambientSource.Pause();
+        }
+    }
+    
+    public void ResumeAmbient()
+    {
+        if (!ambientSource.isPlaying && ambientSource.clip != null)
+        {
+            ambientSource.UnPause();
+        }
+    }
+      // Pause/Resume all audio (music, ambient, and SFX)
+    public void PauseAllAudio()
+    {
+        PauseMusic();
+        PauseAmbient();
+        
+        // Pause all positioned ambient audio sources
+        foreach (var ambientAudioItem in ambientAudio)
+        {
+            if (ambientAudioItem.audioSource != null && ambientAudioItem.audioSource.isPlaying)
+            {
+                ambientAudioItem.audioSource.Pause();
+            }
+        }
+    }
+    
+    public void ResumeAllAudio()
+    {
+        ResumeMusic();
+        ResumeAmbient();
+        
+        // Resume all positioned ambient audio sources
+        foreach (var ambientAudioItem in ambientAudio)
+        {
+            if (ambientAudioItem.audioSource != null && !ambientAudioItem.audioSource.isPlaying && ambientAudioItem.audioSource.clip != null)
+            {
+                ambientAudioItem.audioSource.UnPause();
+            }
+        }
+    }
+    
+    // Fade music in/out
+    public void FadeMusic(float targetVolume, float fadeTime)
+    {
+        StartCoroutine(FadeMusicCoroutine(targetVolume, fadeTime));
+    }
+    
+    private System.Collections.IEnumerator FadeMusicCoroutine(float targetVolume, float fadeTime)
+    {
+        float startVolume = musicSource.volume;
+        float elapsed = 0f;
+        
+        while (elapsed < fadeTime)
+        {
+            elapsed += Time.deltaTime;
+            musicSource.volume = Mathf.Lerp(startVolume, targetVolume, elapsed / fadeTime);
+            yield return null;
+        }
+        
+        musicSource.volume = targetVolume;
+        
+        // Stop music if volume reached zero
+        if (targetVolume <= 0f)
+        {
+            musicSource.Stop();
+        }
+    }
+    
+    // Set master volume for music and SFX
+    public void SetMusicVolume(float volume)
+    {
+        musicVolume = Mathf.Clamp01(volume);
+        if (musicSource != null)
+        {
+            // Update current playing music volume if any
+            if (musicSource.clip != null)
+            {
+                string currentMusicName = GetCurrentMusicName();
+                if (!string.IsNullOrEmpty(currentMusicName) && audioClips.ContainsKey(currentMusicName))
+                {
+                    musicSource.volume = audioClips[currentMusicName].volume * musicVolume;
+                }
+            }
+        }
+        SaveVolumeSettings();
+    }
+    
+    public void SetAmbientVolume(float volume)
+    {
+        ambientVolume = Mathf.Clamp01(volume);
+        if (ambientSource != null)
+        {
+            // Update current playing ambient volume if any
+            if (ambientSource.clip != null)
+            {
+                string currentAmbientName = GetCurrentAmbientName();
+                if (!string.IsNullOrEmpty(currentAmbientName) && audioClips.ContainsKey(currentAmbientName))
+                {                    ambientSource.volume = audioClips[currentAmbientName].volume * ambientVolume;
+                }
+            }
+        }
+          // Update ambient audio volumes
+        UpdateAmbientVolumes();
+        
+        SaveVolumeSettings();
+    }
+    
+public void SetSFXVolume(float volume)
+{
+    sfxVolume = Mathf.Clamp01(volume);
+    if (sfxSource != null)
+    {
+        sfxSource.volume = sfxVolume;
+    }
+    
+    // Update all currently playing looping SFX volumes
+    UpdateLoopingSFXVolumes();
+    
+    SaveVolumeSettings();
+}
+
+// Update volumes of all currently playing looping SFX
+private void UpdateLoopingSFXVolumes()
+{
+    foreach (var kvp in loopingSFX)
+    {
+        if (kvp.Value != null && audioClips.ContainsKey(kvp.Key))
+        {
+            AudioClipData audioData = audioClips[kvp.Key];
+            kvp.Value.volume = audioData.volume * sfxVolume;
+        }
+    }
+}
+    
+    // Get current music name (helper function)
+    private string GetCurrentMusicName()
+    {
+        if (musicSource.clip != null)
+        {
+            foreach (var kvp in audioClips)
+            {
+                if (kvp.Value.clip == musicSource.clip)
+                {
+                    return kvp.Key;
+                }
+            }
+        }
+        return "";
+    }
+    
+    // Get current ambient name (helper function)
+    private string GetCurrentAmbientName()
+    {
+        if (ambientSource.clip != null)
+        {
+            foreach (var kvp in audioClips)
+            {
+                if (kvp.Value.clip == ambientSource.clip)
+                {
+                    return kvp.Key;
+                }
+            }
+        }
+        return "";
+    }
+    
+    // Check if specific audio is playing
+    public bool IsPlaying(string soundName)
+    {
+        if (audioClips.ContainsKey(soundName))
+        {
+            return musicSource.clip != null && musicSource.clip.name == audioClips[soundName].clip.name && musicSource.isPlaying;
+        }
+        return false;
+    }
+      // Get audio clip data for external use
+    public AudioClipData GetAudioData(string soundName)
+    {
+        if (audioClips.ContainsKey(soundName))
+        {
+            return audioClips[soundName];
+        }
+        return null;
+    }
+    
+    // Get custom name for an AudioClip (for radio tracks)
+    public string GetCustomNameForClip(AudioClip clip)
+    {
+        if (clip == null) return "";
+        
+        // Search through all audio clips to find matching clip and return custom name
+        foreach (var kvp in audioClips)
+        {
+            if (kvp.Value.clip == clip)
+            {
+                return kvp.Value.name;
+            }
+        }
+        
+        // Fallback to clip name if not found
+        return clip.name;
+    }
+    
+    // Save volume settings to PlayerPrefs
+    private void SaveVolumeSettings()
+    {
+        PlayerPrefs.SetFloat("MusicVolume", musicVolume);
+        PlayerPrefs.SetFloat("AmbientVolume", ambientVolume);
+        PlayerPrefs.SetFloat("SFXVolume", sfxVolume);
+        PlayerPrefs.Save();
+    }
+      // Load volume settings from PlayerPrefs
+    private void LoadVolumeSettings()
+    {
+        musicVolume = PlayerPrefs.GetFloat("MusicVolume", 0.75f);
+        ambientVolume = PlayerPrefs.GetFloat("AmbientVolume", 0.75f);
+        sfxVolume = PlayerPrefs.GetFloat("SFXVolume", 0.75f);
+        
+        // Apply loaded settings
+        if (musicSource != null)
+            musicSource.volume = musicVolume;
+        if (ambientSource != null)
+            ambientSource.volume = ambientVolume;
+        if (sfxSource != null)
+            sfxSource.volume = sfxVolume;
+    }
+    
+    // Public getters for current volume levels
+    public float GetMusicVolume()
+    {
+        return musicVolume;
+    }
+    
+    public float GetAmbientVolume()
+    {
+        return ambientVolume;
+    }
+    
+    public float GetSFXVolume()
+    {
+        return sfxVolume;
+    }
+    
+    // Update volume sliders in inspector (called automatically)
+// Update volume sliders in inspector (called automatically)
+void OnValidate()
+{
+    if (Application.isPlaying)
+    {
+        SetMusicVolume(musicVolume);
+        SetAmbientVolume(ambientVolume);
+        SetSFXVolume(sfxVolume);
+        
+        // Update looping SFX volumes when values change in inspector
+        UpdateLoopingSFXVolumes();
+    }
+}
+    
+    // Play 3D positioned SFX
+    public void PlaySFX3D(string soundName, Vector3 position)
+    {
+        if (audioClips.ContainsKey(soundName))
+        {
+            AudioClipData audioData = audioClips[soundName];
+            
+            if (audioData.enable3D)
+            {
+                // Create temporary AudioSource for 3D audio
+                GameObject tempAudioObj = new GameObject($"3DSFX_{soundName}");
+                tempAudioObj.transform.position = position;
+                AudioSource tempSource = tempAudioObj.AddComponent<AudioSource>();
+                
+                // Configure 3D audio settings
+                Setup3DAudioSource(tempSource, audioData);
+                
+                tempSource.clip = audioData.clip;
+                tempSource.volume = audioData.volume * sfxVolume;
+                tempSource.pitch = audioData.pitch;
+                tempSource.Play();
+                
+                // Destroy after clip finishes (unless looping)
+                if (!audioData.loop)
+                {
+                    Destroy(tempAudioObj, audioData.clip.length);
+                }
+                else
+                {
+                    tempSource.loop = true;
+                    loopingSFX[soundName] = tempSource;
+                }
+            }
+            else
+            {
+                // Use Unity's built-in 3D positioned audio for non-configured sounds
+                AudioSource.PlayClipAtPoint(audioData.clip, position, audioData.volume * sfxVolume);
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"AudioManager: Sound '{soundName}' not found!");
+        }
+    }
+    
+    // Play 3D looping SFX with tracking
+    public void PlayLooping3DSFX(string soundName, Vector3 position, Transform parent = null)
+    {
+        if (audioClips.ContainsKey(soundName) && !loopingSFX.ContainsKey(soundName))
+        {
+            AudioClipData audioData = audioClips[soundName];
+            
+            // Create a temporary AudioSource for this looping sound
+            GameObject tempAudioObj = new GameObject($"Looping3DSFX_{soundName}");
+            tempAudioObj.transform.position = position;
+            
+            // Parent to specified transform if provided (for moving objects)
+            if (parent != null)
+            {
+                tempAudioObj.transform.SetParent(parent);
+            }
+            
+            AudioSource tempSource = tempAudioObj.AddComponent<AudioSource>();
+            
+            if (audioData.enable3D)
+            {
+                Setup3DAudioSource(tempSource, audioData);
+            }
+            else
+            {
+                // Default 3D settings
+                tempSource.spatialBlend = 1f;
+                tempSource.rolloffMode = AudioRolloffMode.Logarithmic;
+                tempSource.minDistance = 1f;
+                tempSource.maxDistance = 50f;
+            }
+            
+            tempSource.clip = audioData.clip;
+            tempSource.volume = audioData.volume * sfxVolume;
+            tempSource.pitch = audioData.pitch;
+            tempSource.loop = true;
+            tempSource.Play();
+            
+            loopingSFX[soundName] = tempSource;
+        }
+    }
+    
+    // Setup 3D audio source with custom settings
+    private void Setup3DAudioSource(AudioSource source, AudioClipData audioData)
+    {
+        source.spatialBlend = audioData.spatialBlend;
+        source.rolloffMode = audioData.rolloffMode;
+        source.minDistance = audioData.minDistance;
+        source.maxDistance = audioData.maxDistance;
+        source.dopplerLevel = audioData.dopplerLevel;
+        
+        // Optional: Set custom 3D audio curve
+        if (audioData.rolloffMode == AudioRolloffMode.Custom)
+        {
+            // You can set custom curves here if needed
+            source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, AnimationCurve.EaseInOut(0, 1, 1, 0));
+        }
+    }
+    
+    // Move existing 3D looping audio to new position
+    public void MoveSFX3D(string soundName, Vector3 newPosition)
+    {
+        if (loopingSFX.ContainsKey(soundName))
+        {
+            AudioSource source = loopingSFX[soundName];
+            if (source != null)
+            {
+                source.transform.position = newPosition;
+            }
+        }
+    }
+    
+    // Attach 3D looping SFX to a transform (for moving objects)
+    public void AttachSFX3D(string soundName, Transform target)
+    {
+        if (loopingSFX.ContainsKey(soundName))
+        {
+            AudioSource source = loopingSFX[soundName];
+            if (source != null && target != null)
+            {
+                source.transform.SetParent(target);
+                source.transform.localPosition = Vector3.zero;
+            }
+        }
+    }
+    
+    // Set audio listener transform (usually camera or player)
+    public void SetAudioListener(Transform listenerTransform)
+    {
+        audioListener = listenerTransform;
+        EnsureAudioListener();
+    }
+    
+    // Override existing PlaySFXAtPosition to use new 3D system
+    public void PlaySFXAtPosition(string soundName, Vector3 position)
+    {
+        PlaySFX3D(soundName, position);
+    }
+    
+    // Override existing PlayLoopingSFX to support 3D positioning
+    public void PlayLoopingSFX(string soundName, Vector3 position = default(Vector3), Transform parent = null)
+    {
+        if (position == default(Vector3))
+        {
+            // Original 2D behavior
+            if (audioClips.ContainsKey(soundName) && !loopingSFX.ContainsKey(soundName))
+            {
+                AudioClipData audioData = audioClips[soundName];
+                
+                GameObject tempAudioObj = new GameObject($"LoopingSFX_{soundName}");
+                AudioSource tempSource = tempAudioObj.AddComponent<AudioSource>();
+                
+                tempSource.clip = audioData.clip;
+                tempSource.volume = audioData.volume * sfxVolume;
+                tempSource.pitch = audioData.pitch;
+                tempSource.loop = true;
+                tempSource.spatialBlend = 0f; // 2D audio
+                tempSource.Play();
+                
+                loopingSFX[soundName] = tempSource;
+            }
+        }
+        else
+        {
+            // Use 3D positioning
+            PlayLooping3DSFX(soundName, position, parent);
+        }
+    }
+    
+    // Get 3D audio source for external manipulation
+    public AudioSource Get3DAudioSource(string soundName)
+    {
+        if (loopingSFX.ContainsKey(soundName))
+        {
+            return loopingSFX[soundName];
+        }
+        return null;
+    }
+    
+    // Check if sound is within hearing range
+    public bool IsWithinHearingRange(string soundName, Vector3 position)
+    {
+        if (audioClips.ContainsKey(soundName) && audioListener != null)
+        {
+            AudioClipData audioData = audioClips[soundName];
+            float distance = Vector3.Distance(audioListener.position, position);
+            return distance <= audioData.maxDistance;
+        }
+        return false;
+    }
+    
+    // Check if looping SFX is playing
+    public bool IsLoopingSFXPlaying(string soundName)
+    {
+        return loopingSFX.ContainsKey(soundName) && loopingSFX[soundName] != null && loopingSFX[soundName].isPlaying;
+    }
+    
+    // Stop looping SFX
+    public void StopLoopingSFX(string soundName)
+    {
+        if (loopingSFX.ContainsKey(soundName))
+        {
+            if (loopingSFX[soundName] != null)
+            {
+                loopingSFX[soundName].Stop();
+                DestroyImmediate(loopingSFX[soundName].gameObject);
+            }
+            loopingSFX.Remove(soundName);
+        }
+    }
+    
+    // Stop all looping SFX
+    public void StopAllLoopingSFX()
+    {
+        foreach (var kvp in loopingSFX)
+        {
+            if (kvp.Value != null)
+            {
+                kvp.Value.Stop();
+                DestroyImmediate(kvp.Value.gameObject);
+            }
+        }
+        loopingSFX.Clear();
+    }
+    
+    // Radio System Methods
+    public AudioClipData[] GetRadio102Tracks()
+    {
+        return radio102_10Tracks ?? new AudioClipData[0];
+    }
+    
+    public AudioClipData[] GetMClassicalTracks()
+    {
+        return mClassicalRadioTracks ?? new AudioClipData[0];
+    }
+    
+    public AudioClip[] GetRadio102AudioClips()
+    {
+        if (radio102_10Tracks == null) return new AudioClip[0];
+        
+        List<AudioClip> clips = new List<AudioClip>();
+        foreach (var track in radio102_10Tracks)
+        {
+            if (track != null && track.clip != null)
+            {
+                clips.Add(track.clip);
+            }
+        }
+        return clips.ToArray();
+    }
+    
+    public AudioClip[] GetMClassicalAudioClips()
+    {
+        if (mClassicalRadioTracks == null) return new AudioClip[0];
+        
+        List<AudioClip> clips = new List<AudioClip>();
+        foreach (var track in mClassicalRadioTracks)
+        {
+            if (track != null && track.clip != null)
+            {
+                clips.Add(track.clip);
+            }
+        }
+        return clips.ToArray();
+    }
+    
+    public bool IsRadioSystemEnabled()
+    {
+        return radioSystemEnabled;
+    }
+      public void SetRadioSystemEnabled(bool enabled)
+    {
+        radioSystemEnabled = enabled;
+    }
+      // ==================== AMBIENT AUDIO SYSTEM (2D & 3D) ====================
+    
+    private void SetupAmbientAudio()
+    {
+        if (ambientAudio == null) return;
+        
+        for (int i = 0; i < ambientAudio.Length; i++)
+        {
+            var ambient = ambientAudio[i];
+            
+            if (ambient.clip == null)
+            {
+                Debug.LogWarning($"Ambient Audio '{ambient.name}': audio clip is null!");
+                continue;
+            }
+            
+            if (ambient.is3D)
+            {
+                // 3D positioned audio requires a GameObject
+                if (ambient.sourceObject == null)
+                {
+                    Debug.LogWarning($"3D Ambient Audio '{ambient.name}': sourceObject is null! Skipping...");
+                    continue;
+                }
+                
+                // Create or get AudioSource component on the GameObject
+                ambient.audioSource = ambient.sourceObject.GetComponent<AudioSource>();
+                if (ambient.audioSource == null)
+                {
+                    ambient.audioSource = ambient.sourceObject.AddComponent<AudioSource>();
+                }
+            }
+            else
+            {
+                // 2D global audio - create AudioSource on AudioManager
+                GameObject audioObj = new GameObject($"2D_Ambient_{ambient.name}");
+                audioObj.transform.SetParent(transform);
+                ambient.audioSource = audioObj.AddComponent<AudioSource>();
+            }
+            
+            // Configure audio settings
+            Setup3DAmbientAudio(ambient);
+            
+            // Start playing if specified
+            if (ambient.playOnStart)
+            {
+                PlayAmbientAudio(ambient.name);
+            }
+        }
+        
+        Debug.Log($"Setup {ambientAudio.Length} ambient audio sources (2D & 3D)");
+    }
+    
+    private void Setup3DAmbientAudio(PositionedAmbientAudio ambient)
+    {
+        var audioSource = ambient.audioSource;
+        
+        // Configure AudioSource
+        audioSource.clip = ambient.clip;
+        audioSource.volume = ambient.volume * ambientVolume;
+        audioSource.pitch = ambient.pitch;
+        audioSource.loop = ambient.loop;
+        audioSource.playOnAwake = false;
+        
+        if (ambient.is3D)
+        {
+            // 3D Audio Settings
+            audioSource.spatialBlend = 1f; // Full 3D
+            audioSource.rolloffMode = ambient.rolloffMode;
+            audioSource.minDistance = ambient.minDistance;
+            audioSource.maxDistance = ambient.maxDistance;
+            audioSource.dopplerLevel = ambient.dopplerLevel;
+        }
+        else
+        {
+            // 2D Audio Settings
+            audioSource.spatialBlend = 0f; // Full 2D
+        }
+          // Optimize for ambient audio
+        audioSource.bypassEffects = false;
+        audioSource.bypassListenerEffects = false;
+        audioSource.bypassReverbZones = false;
+        
+        // Initialize tracking values for runtime updates
+        ambient.lastVolume = ambient.volume;
+        ambient.lastPitch = ambient.pitch;
+        ambient.lastMinDistance = ambient.minDistance;
+        ambient.lastMaxDistance = ambient.maxDistance;
+    }
+    
+    public void PlayAmbientAudio(string audioName)
+    {
+        var ambient = GetAmbientAudio(audioName);
+        if (ambient != null && ambient.audioSource != null)
+        {
+            ambient.audioSource.Play();
+        }
+    }
+    
+    public void StopAmbientAudio(string audioName)
+    {
+        var ambient = GetAmbientAudio(audioName);
+        if (ambient != null && ambient.audioSource != null)
+        {
+            ambient.audioSource.Stop();
+        }
+    }
+    
+    public void StopAllAmbientAudio()
+    {
+        if (ambientAudio == null) return;
+        
+        foreach (var ambient in ambientAudio)
+        {
+            if (ambient.audioSource != null)
+            {
+                ambient.audioSource.Stop();
+            }
+        }
+    }
+    
+    public void UpdateAmbientVolumes()
+    {
+        if (ambientAudio == null) return;
+        
+        foreach (var ambient in ambientAudio)
+        {
+            if (ambient.audioSource != null)
+            {
+                ambient.audioSource.volume = ambient.volume * ambientVolume;
+            }
+        }
+    }
+    
+    private PositionedAmbientAudio GetAmbientAudio(string audioName)
+    {
+        if (ambientAudio == null) return null;
+        
+        foreach (var ambient in ambientAudio)
+        {
+            if (ambient.name == audioName)
+            {
+                return ambient;
+            }
+        }
+          return null;
+    }
+    
+    private void UpdateAmbientAudioSettings()
+    {
+        if (ambientAudio == null) return;
+        
+        foreach (var ambient in ambientAudio)
+        {
+            if (ambient.audioSource == null) continue;
+              // Check for changes and update if needed
+            if (ambient.lastVolume != ambient.volume)
+            {
+                ambient.audioSource.volume = ambient.volume * ambientVolume;
+                ambient.lastVolume = ambient.volume;
+            }
+            
+            if (ambient.lastPitch != ambient.pitch)
+            {
+                ambient.audioSource.pitch = ambient.pitch;
+                ambient.lastPitch = ambient.pitch;
+            }
+            
+            if (ambient.is3D)
+            {                if (ambient.lastMinDistance != ambient.minDistance)
+                {
+                    ambient.audioSource.minDistance = ambient.minDistance;
+                    ambient.lastMinDistance = ambient.minDistance;
+                }
+                
+                if (ambient.lastMaxDistance != ambient.maxDistance)
+                {
+                    ambient.audioSource.maxDistance = ambient.maxDistance;
+                    ambient.lastMaxDistance = ambient.maxDistance;
+                }
+            }
+            
+            // Update rolloff mode and doppler level
+            if (ambient.is3D && ambient.audioSource.rolloffMode != ambient.rolloffMode)
+            {
+                ambient.audioSource.rolloffMode = ambient.rolloffMode;
+            }
+            
+            if (ambient.is3D && ambient.audioSource.dopplerLevel != ambient.dopplerLevel)
+            {
+                ambient.audioSource.dopplerLevel = ambient.dopplerLevel;
+            }
+        }
+    }
+    
+    // ==================== GIZMOS FOR AMBIENT AUDIO ====================
+    
+    void OnDrawGizmos()
+    {
+        if (ambientAudio == null) return;
+        
+        foreach (var ambient in ambientAudio)
+        {
+            if (!ambient.is3D || ambient.sourceObject == null || !ambient.showGizmos) continue;
+            
+            DrawAmbientAudioGizmos(ambient);
+        }
+    }
+    
+    void OnDrawGizmosSelected()
+    {
+        if (ambientAudio == null) return;
+        
+        foreach (var ambient in ambientAudio)
+        {
+            if (!ambient.is3D || ambient.sourceObject == null || !ambient.showGizmos) continue;
+            
+            DrawAmbientAudioGizmos(ambient, true);
+        }
+    }
+      private void DrawAmbientAudioGizmos(PositionedAmbientAudio ambientAudio, bool selected = false)
+    {
+        Vector3 position = ambientAudio.sourceObject.transform.position;
+        Color originalColor = Gizmos.color;
+        
+        // Set gizmo color with transparency
+        Color gizmoColor = ambientAudio.gizmoColor;
+        gizmoColor.a = selected ? 0.8f : 0.3f;
+        Gizmos.color = gizmoColor;
+          // Draw minimum distance rectangle (inner range) - using custom dimensions
+        Vector3 minSize = new Vector3(
+            ambientAudio.minDistance * ambientAudio.gizmoWidth,   // width
+            ambientAudio.minDistance * ambientAudio.gizmoHeight,  // height
+            ambientAudio.minDistance * ambientAudio.gizmoLength   // length/depth
+        );
+        Gizmos.DrawCube(position, minSize);
+        
+        // Draw maximum distance wireframe rectangle (outer range)
+        gizmoColor.a = selected ? 0.6f : 0.2f;
+        Gizmos.color = gizmoColor;
+        Vector3 maxSize = new Vector3(
+            ambientAudio.maxDistance * ambientAudio.gizmoWidth,   // width
+            ambientAudio.maxDistance * ambientAudio.gizmoHeight,  // height
+            ambientAudio.maxDistance * ambientAudio.gizmoLength   // length/depth
+        );
+        Gizmos.DrawWireCube(position, maxSize);
+        
+        // Draw center point
+        Gizmos.color = Color.white;
+        Gizmos.DrawSphere(position, 0.5f);
+        
+        // Draw label in Scene view
+        #if UNITY_EDITOR
+        UnityEditor.Handles.Label(position + Vector3.up * 2f, ambientAudio.name);
+        #endif
+        
+        // Restore original color
+        Gizmos.color = originalColor;
+    }
+}

@@ -1,0 +1,2438 @@
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+
+[System.Serializable]
+public class ObjectInteractionHandler : IInteractionHandler
+{
+    private InteractionManager manager;
+
+    private Camera cachedPlayerCamera;
+    private ObjectPlacement cachedObjectPlacement;
+    private int cachedPlayerLayer;
+    private int cachedDefaultLayer;
+    
+    private bool isPlacingJar = false;
+    private bool isPlacingPot = false;
+    private bool isPlacingPan = false;
+    private bool isPlacingDispenser = false;
+
+    
+    // Static dictionaries for faster lookups
+    private static readonly HashSet<string> SimplePickupTags = new HashSet<string>
+    {
+        "IcePack", "BananaBox", "Wrapper", "CookingOil",
+        "EmptyBowl", "LecheFlan", "SticksPackage", "CookingPotLid",
+        "KariokaPouch", "PalitawBox", "BiloBox", "Milk", "IngredientJar", "PancakeBatter", "OrderBox", "CookingPan"
+    };
+    
+
+    
+    private static readonly Dictionary<string, Vector3> PickupOffsets = new Dictionary<string, Vector3>
+    {
+        { "EmptyBowl", new Vector3(0.3f, -0.3f, 0.8f) },
+        { "Default", new Vector3(0.3f, -0.3f, 0.5f) },
+        { "OrderBox", new Vector3(0.793f, -0.498f, 1.043f) },
+        { "IngredientJar", new Vector3(0.3f, -0.25f, 0.5f) },
+        { "BananaBox", new Vector3(0.3f, -0.22f, 0.5f) },
+        { "KariokaPouch", new Vector3(0.3f, -0.21f, 0.5f) },
+        { "PalitawBox", new Vector3(0.3f, -0.21f, 0.5f) },
+        { "BiloBox", new Vector3(0.3f, -0.21f, 0.5f) },
+        { "Milk", new Vector3(0.3f, -0.12f, 0.5f) },
+        { "PancakeBatter", new Vector3(0.3f, -0.18f, 0.52f) },
+        { "CookingPan", new Vector3(0.3f, -0.3f, 0.6f) }
+    };
+
+    // Custom held rotations for specific objects
+    private static readonly Dictionary<string, Quaternion> HeldRotations = new Dictionary<string, Quaternion>
+    {
+        { "KariokaPouch", Quaternion.Euler(0, -121.52f, 0) },
+        { "PalitawBox", Quaternion.Euler(0, -121.52f, 0) },
+        { "BiloBox", Quaternion.Euler(0, -121.52f, 0) },
+        { "Milk", Quaternion.Euler(0, -208.23f, 0) },
+        { "IngredientJar", Quaternion.Euler(0, -31.95f, 0) },
+        { "BananaBox", Quaternion.Euler(0, -29.36f, 0) },
+        { "PancakeBatter", Quaternion.Euler(0, 144.22f, 0) },
+        { "CookingPan", Quaternion.Euler(0, -90f, 0) }
+    };
+
+    // Audio settings
+    private static readonly string DEFAULT_PICKUP_SOUND = "PickUp";
+    private static readonly string DEFAULT_PLACEDOWN_SOUND = "PlaceDown";
+
+    public void Initialize(InteractionManager interactionManager)
+    {
+        manager = interactionManager;
+        CacheFrequentlyUsedComponents();
+    }
+    
+    private void CacheFrequentlyUsedComponents()
+    {
+        cachedPlayerCamera = manager.GetPlayerCamera();
+        cachedObjectPlacement = manager.GetObjectPlacement();
+        cachedPlayerLayer = manager.GetPlayerLayer();
+        cachedDefaultLayer = manager.GetDefaultLayer();
+    }
+
+    public bool TryHandleInteraction(RaycastHit hit, GameObject heldObject)
+    {
+        GameObject target = hit.collider.gameObject;
+        string tag = target.tag;
+
+        // Handle simple pickups with cached lookup
+        if (SimplePickupTags.Contains(tag))
+        {
+            HandleSimplePickupOptimized(target, tag);
+            return true;
+        }
+
+        // Handle tagged interactions with optimized lookup
+        if (TryHandleTaggedInteractionOptimized(hit, target, tag, heldObject))
+        {
+            return true;
+        }
+
+        // Handle Mais Con Yelo containers (cache component lookup)
+        MaisConYeloContainer maisContainer = target.GetComponent<MaisConYeloContainer>();
+        if (maisContainer != null && maisContainer.currentState != MaisConYeloContainer.MaisState.Empty)
+        {
+            HandleMaisConYeloInteractions(target);
+            return true;
+        }
+
+        return false;
+    }
+    
+    private void HandleSimplePickupOptimized(GameObject target, string tag)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject != null) return;
+        
+        // Special check for CookingPotLid - don't allow pickup when pot is boiling
+        if (tag == "CookingPotLid")
+        {
+            // Check if this lid is attached to a boiling pot
+            CookingPot parentPot = target.GetComponentInParent<CookingPot>();
+            if (parentPot != null && parentPot.isBoiling)
+            {
+                manager.ShowInteraction("Can't remove lid while pot is boiling", true);
+                return;
+            }
+        }
+        
+        Vector3 pickupOffset = PickupOffsets.TryGetValue(tag, out Vector3 offset) ? offset : PickupOffsets["Default"];
+        Quaternion heldRotation = HeldRotations.TryGetValue(tag, out Quaternion rotation) ? rotation : default;
+        
+        manager.ShowPickupButton();
+        // Removed duplicate item name display - now handled by ItemDescriptionDisplay
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            // Special handling for CookingPot when picked up from stove
+            if (tag == "CookingPot")
+            {
+                CookingPot pot = target.GetComponent<CookingPot>();
+                if (pot != null && pot.onStove)
+                {
+                    pot.OnPickedUp(); // Call the pot's pickup method to handle stove cleanup
+                }
+            }
+            // Note: CookingPan OnPickedUp() is handled in PickUpObject method to avoid duplicate calls
+            
+            PickUpObject(target, pickupOffset, heldRotation);
+        }
+    }
+    
+    private bool TryHandleTaggedInteractionOptimized(RaycastHit hit, GameObject target, string tag, GameObject heldObject)
+    {
+        // Use switch for better performance than dictionary lookup for execution
+        switch (tag)
+        {
+            // Add this case for SimpleSink
+            case "SimpleSink":
+                return HandleSimpleSinkInteraction(target, heldObject);
+                
+            case "PlasticCup":
+                HandleMaisConYeloInteractions(target);
+                HandleHaloHaloInteractions(target);
+                return true;
+                
+            case "CrushedIce":
+                HandleMaisConYeloInteractions(target);
+                HandleHaloHaloInteractions(target);
+                return true;
+                
+            case "IceShredder":
+                HandleIceShredderInteraction(target);
+                return true;
+                
+            case "TuronWrapper":
+                HandleTuronWrapperInteraction(hit);
+                return true;
+                
+            case "KariokaPouch":
+                HandleKariokaPouchPickup(target);
+                return true;
+                
+            case "IngredientJar":
+                HandleIngredientJarPickup(target);
+                return true;
+                
+            case "BiloBox":
+                HandleBiloBoxPickup(target);
+                return true;
+                
+            case "BananaBox":
+                HandleBananaBoxPickup(target);
+                return true;
+                
+            case "Milk":
+                HandleMilkPickup(target);
+                return true;
+                
+            case "PalitawBox":
+                HandlePalitawBoxInteraction(target);
+                return true;
+                
+            case "PancakeBatter":
+                HandlePancakeBatterPickup(hit);
+                return true;
+                
+            case "JarHolder":
+                HandleJarHolderInteraction(target);
+                return true;
+                
+            case "Spatula":
+                HandleSpatulaPickup(target);
+                return true;
+                
+            case "IceCream":
+                HandleIceCreamInteraction(target);
+                return true;
+                
+            case "JarSnapPoint":
+                HandleJarHolderInteraction(target.transform.parent.gameObject);
+                return true;
+                
+            case "FrontWindow":
+                HandleFrontWindowInteraction(hit);
+                return true;
+                
+            case "Cabinet":
+                HandleCabinetInteraction(hit);
+                return true;
+                
+            case "RefDoor":
+                HandleRefDoorInteraction(hit);
+                return true;
+                
+            case "Door":
+                HandleDoorInteraction(hit);
+                return true;
+                
+            case "ButterStation":
+                // Special case optimization
+                if (heldObject != null && (IsCookedFood(heldObject) || heldObject.CompareTag("Plate")))
+                {
+                    return false; // Let FoodInteractionHandler handle it
+                }
+                return true;
+                
+            case "Stick":
+                HandleStickInteraction(target);
+                return true;
+                
+            case "SticksJar":
+                HandleSticksJarInteraction(target);
+                return true;
+                
+            case "SticksPackage":
+                HandleSticksPackageInteraction(target);
+                return true;
+            case "OrderBox":
+                // If we're holding an OrderBox and looking at a TrashCan, let FoodInteractionHandler handle it
+                if (heldObject != null && heldObject.CompareTag("OrderBox") && target.CompareTag("TrashCan"))
+                {
+                    return false; // Let other handlers (FoodInteractionHandler) handle TrashCan interaction
+                }
+                HandleOrderBoxInteraction(target);
+                return true;
+            
+            case "BananaTray":
+                HandleBananaTrayInteraction(target);
+                return true;
+                
+            case "KamoteTray":
+                HandleKamoteTrayInteraction(target);
+                return true;
+                
+            case "Radio":
+                HandleRadioInteraction(target);
+                return true;
+                
+            default:
+                return false;
+        }
+    }
+
+
+private void HandleOrderBoxInteraction(GameObject target)
+{
+    GameObject heldObject = manager.GetHeldObject();
+    OrderBox orderBox = target.GetComponent<OrderBox>();
+    
+    if (orderBox == null) return;
+    
+    if (heldObject == null)
+    {
+        // Always allow pickup of the order box
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            PickUpObject(target, PickupOffsets.ContainsKey("OrderBox") ? PickupOffsets["OrderBox"] : PickupOffsets["Default"]);
+        }
+    }
+    else if (heldObject == target) // Player is holding this order box
+    {
+
+        
+        if (orderBox.HasItems())
+        {
+            manager.ShowInteractButton();
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                if (!orderBox.IsUIActive())
+                {
+                    orderBox.ShowUI();
+                }
+                else
+                {
+                    orderBox.HideUI();
+                }
+            }
+        }
+        else
+        {
+
+        }
+    }
+    else
+    {
+
+    }
+}
+
+    public bool TryHandleSnapInteraction(RaycastHit hit, GameObject heldObject)
+    {
+        if (heldObject == null) return false;
+
+        // Use switch for better performance
+        return heldObject.tag switch
+        {
+            "CookingPot" => HandleCookingPotSnap(hit, heldObject),
+            "PancakeDispenser" => HandlePancakeDispenserSnap(hit, heldObject),
+            "CookingPan" => HandleCookingPanSnap(hit, heldObject),
+            "IngredientJar" => HandleIngredientJarSnap(hit, heldObject),
+            _ => false
+        };
+    }
+
+    public bool TryHandleCustomerInteraction(RaycastHit hit, GameObject heldObject)
+    {
+        CustomerNPC customer = hit.collider.gameObject.GetComponent<CustomerNPC>();
+        if (customer == null || heldObject == null) return false;
+
+        HandleCustomerInteraction(customer, heldObject);
+        return true;
+    }
+
+    private bool HandleCookingPotSnap(RaycastHit hit, GameObject heldObject)
+    {
+        CookingPot pot = heldObject.GetComponent<CookingPot>();
+        if (pot == null) return false;
+
+        // Check if there are available snap points (either new array system or old single system)
+        bool hasAvailableSnapPoints = false;
+        
+        // Check new multiple snap points system
+        if (pot.stoveParents != null && pot.stoveParents.Length > 0)
+        {
+            // Check if any snap point is available
+            foreach (Transform snapPoint in pot.stoveParents)
+            {
+                if (snapPoint != null && !IsStoveSnapPointOccupied(snapPoint))
+                {
+                    hasAvailableSnapPoints = true;
+                    break;
+                }
+            }
+        }
+        // Fallback to old single snap point system
+        else if (pot.stoveParent != null)
+        {
+            hasAvailableSnapPoints = !IsStoveSnapPointOccupied(pot.stoveParent);
+        }
+
+        if (!hasAvailableSnapPoints) return false;
+
+        // Optimized hit checking
+        Transform hitTransform = hit.transform;
+        bool isValidHit = hitTransform.CompareTag("Stove") || 
+                         (pot.stoveParent != null && (hitTransform == pot.stoveParent || 
+                         (hitTransform.parent != null && hitTransform.parent.CompareTag("Stove"))));
+
+        if (isValidHit)
+        {
+            manager.ShowPlaceDownButton();
+            if (cachedObjectPlacement != null) cachedObjectPlacement.showSnapPreview = true;
+
+            if (Input.GetKeyDown(KeyCode.F) && !isPlacingPot)
+                PlacePot(Vector3.zero, Quaternion.identity);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool HandlePancakeDispenserSnap(RaycastHit hit, GameObject heldObject)
+    {
+        PancakeDispenser dispenser = heldObject.GetComponent<PancakeDispenser>();
+        if (dispenser == null || dispenser.dispenserSnapPoint == null || !hit.transform.CompareTag("Mixer"))
+            return false;
+
+        manager.ShowPlaceDownButton();
+        if (cachedObjectPlacement != null) cachedObjectPlacement.showSnapPreview = true;
+
+        if (Input.GetKeyDown(KeyCode.F) && !isPlacingDispenser)
+            PlaceDispenserAtSnap(dispenser);
+
+        return true;
+    }
+
+    private bool HandleCookingPanSnap(RaycastHit hit, GameObject heldObject)
+    {
+        CookingPan pan = heldObject.GetComponent<CookingPan>();
+        if (pan == null || !hit.transform.CompareTag("Stove"))
+            return false;
+
+        // Check if there are available snap points for this pan
+        if (pan.stovePanSnapPoints == null || pan.stovePanSnapPoints.Length == 0)
+        {
+            // Fallback to old single snap point behavior
+            if (pan.stovePanSnapPoint == null)
+                return false;
+        }
+
+        manager.ShowPlaceDownButton();
+        if (cachedObjectPlacement != null) cachedObjectPlacement.showSnapPreview = true;
+
+        if (Input.GetKeyDown(KeyCode.F) && !isPlacingPan)
+            PlacePanAtSnap(pan);
+
+        return true;
+    }
+
+    private bool HandleIngredientJarSnap(RaycastHit hit, GameObject heldObject)
+    {
+        Transform hitTransform = hit.collider.transform;
+        if (!hit.collider.CompareTag("JarSnapPoint") || hitTransform.childCount != 0)
+            return false;
+
+        manager.ShowPlaceDownButton();
+        if (cachedObjectPlacement != null) cachedObjectPlacement.showSnapPreview = true;
+
+        if (Input.GetKeyDown(KeyCode.F) && !isPlacingJar) // Prevent rapid placement
+        {
+            PlaceJarAtSnap(hitTransform, heldObject);
+        }
+
+        return true;
+    }
+
+    private void PlaceJarAtSnap(Transform snapPoint, GameObject jar)
+    {
+        if (isPlacingJar) return; // Double-check to prevent multiple placements
+        
+        isPlacingJar = true; // Set flag immediately
+        
+        // Store the original world scale BEFORE any operations
+        Vector3 originalWorldScale = jar.transform.lossyScale;
+        
+        manager.ClearHeldObject();
+
+        // First, detach from camera and reset parent
+        jar.transform.SetParent(null);
+        
+        // Set position and rotation first
+        jar.transform.position = snapPoint.position;
+        jar.transform.rotation = snapPoint.rotation;
+        
+        // THEN parent to snap point
+        jar.transform.SetParent(snapPoint);
+        
+        // Reset local position and rotation after parenting
+        jar.transform.localPosition = Vector3.zero;
+        jar.transform.localRotation = Quaternion.identity;
+        
+        // Calculate the correct local scale to maintain world scale
+        Vector3 parentScale = snapPoint.lossyScale;
+        Vector3 correctLocalScale = new Vector3(
+            originalWorldScale.x / parentScale.x,
+            originalWorldScale.y / parentScale.y,
+            originalWorldScale.z / parentScale.z
+        );
+        jar.transform.localScale = correctLocalScale;
+        
+        SetLayerRecursively(jar, cachedDefaultLayer);
+
+        // Optimized collider enabling
+        EnableAllColliders(jar);
+
+        // Play place down sound using AudioManager
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX3D(DEFAULT_PLACEDOWN_SOUND, jar.transform.position);
+        }
+
+        Rigidbody rb = jar.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+        }
+
+        if (cachedObjectPlacement != null) cachedObjectPlacement.showSnapPreview = false;
+        
+        // Reset flag after a short delay to prevent immediate re-placement
+        manager.StartCoroutine(ResetPlacingFlag());
+    }
+
+    private System.Collections.IEnumerator ResetPlacingFlag()
+    {
+        yield return new WaitForSeconds(0.2f); // Small delay to prevent rapid placement
+        isPlacingJar = false;
+    }
+
+    // Optimized helper method for enabling colliders
+    private void EnableAllColliders(GameObject obj)
+    {
+        Collider[] colliders = obj.GetComponentsInChildren<Collider>();
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            colliders[i].enabled = true;
+        }
+    }
+
+    private void HandleIceShredderInteraction(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject != null && heldObject.CompareTag("IcePack"))
+        {
+            manager.ShowInteractButton();
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                IceShredder shredder = target.GetComponent<IceShredder>();
+                if (shredder != null)
+                {
+                    manager.StartCoroutine(shredder.ShredIceRoutine());
+                    Object.Destroy(heldObject);
+                    manager.ClearHeldObject();
+                }
+            }
+        }
+        else
+        {
+            manager.ShowInteraction("Need to hold an ice pack to use shredder");
+        }
+    }
+
+    private void HandleFrontWindowInteraction(RaycastHit hit)
+    {
+        FrontWindow frontWindow = hit.collider.GetComponent<FrontWindow>();
+        if (frontWindow == null) return;
+
+        // Check if player can open the store (all previous objectives completed)
+        if (!ObjectiveHelper.CanOpenStore())
+        {
+            string message = ObjectiveHelper.GetIncompleteObjectivesMessage();
+            if (string.IsNullOrEmpty(message))
+                message = "Complete all previous objectives before opening the store!";
+            manager.ShowInteraction(message);
+            return;
+        }
+
+        manager.ShowInteractButton();
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            frontWindow.ToggleWindow();
+        }
+    }
+
+    private void HandleKariokaPouchPickup(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject == null)
+        {
+            KariokaPouch kariokaPouch = target.GetComponent<KariokaPouch>();
+            if (kariokaPouch != null)
+            {
+                manager.ShowPickupButton();
+                // Item name and quantity now shown by ItemDescriptionDisplay
+                if (Input.GetKeyDown(KeyCode.E))
+                    PickUpObject(target, new Vector3(0.3f, -0.21f, 0.5f), Quaternion.Euler(0, -121.52f, 0));
+            }
+        }
+    }
+
+    private void HandleIngredientJarPickup(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject == null)
+        {
+            IngredientJar jar = target.GetComponent<IngredientJar>();
+            if (jar != null)
+            {
+                string ingredientName = jar.GetIngredientName();
+                manager.ShowPickupButton();
+                // Item name and quantity now shown by ItemDescriptionDisplay
+                if (Input.GetKeyDown(KeyCode.E))
+                    PickUpObject(target, new Vector3(0.3f, -0.25f, 0.5f), Quaternion.Euler(0, -31.95f, 0));
+            }
+            else
+            {
+                manager.ShowPickupButton();
+                // Item name now shown by ItemDescriptionDisplay
+                if (Input.GetKeyDown(KeyCode.E))
+                    PickUpObject(target, new Vector3(0.3f, -0.25f, 0.5f), Quaternion.Euler(0, -31.95f, 0));
+            }
+        }
+    }
+
+    private void HandleBiloBoxPickup(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject == null)
+        {
+            BiloBox biloBox = target.GetComponent<BiloBox>();
+            if (biloBox != null)
+            {
+                manager.ShowPickupButton();
+                // Item name and quantity now shown by ItemDescriptionDisplay
+                if (Input.GetKeyDown(KeyCode.E))
+                    PickUpObject(target, new Vector3(0.3f, -0.21f, 0.5f), Quaternion.Euler(0, -121.52f, 0));
+            }
+        }
+    }
+
+    private void HandleMilkPickup(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject == null)
+        {
+            CoconutMilkBottle bottle = target.GetComponent<CoconutMilkBottle>();
+            if (bottle != null)
+            {
+                manager.ShowPickupButton();
+                // Item name and quantity now shown by ItemDescriptionDisplay
+                if (Input.GetKeyDown(KeyCode.E))
+                    PickUpObject(target, new Vector3(0.3f, -0.12f, 0.5f), Quaternion.Euler(0, -208.23f, 0));
+            }
+        }
+    }
+
+    private void HandleBananaBoxPickup(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject == null)
+        {
+            BananaBox bananaBox = target.GetComponent<BananaBox>();
+            if (bananaBox != null)
+            {
+                manager.ShowPickupButton();
+                // Item name and quantity now shown by ItemDescriptionDisplay
+                if (Input.GetKeyDown(KeyCode.E))
+                    PickUpObject(target, new Vector3(0.3f, -0.22f, 0.5f), Quaternion.Euler(0, -29.36f, 0));
+            }
+        }
+    }
+
+    private void HandlePalitawBoxInteraction(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject != null) return;
+
+        PalitawDoughBox doughBox = target.GetComponent<PalitawDoughBox>();
+        if (doughBox == null) return;
+
+        manager.ShowPickupButton();
+        // Item name and quantity now shown by ItemDescriptionDisplay
+
+        if (Input.GetKeyDown(KeyCode.E))
+            PickUpObject(target, new Vector3(0.3f, -0.21f, 0.5f), Quaternion.Euler(0, -121.52f, 0));
+    }
+
+    private void HandlePancakeBatterPickup(RaycastHit hit)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject == null)
+        {
+            GameObject target = hit.collider.gameObject;
+            string tag = target.tag;
+            
+            Vector3 pickupOffset = PickupOffsets.TryGetValue(tag, out Vector3 offset) ? offset : PickupOffsets["Default"];
+            Quaternion heldRotation = HeldRotations.TryGetValue(tag, out Quaternion rotation) ? rotation : default;
+            
+            manager.ShowPickupButton();
+            // Item name now shown by ItemDescriptionDisplay
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                // Use standardized PickUpObject with custom position and rotation
+                PickUpObject(target, pickupOffset, heldRotation);
+            }
+        }
+    }
+
+    private void HandleJarHolderInteraction(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject != null && heldObject.CompareTag("IngredientJar"))
+        {
+            ObjectPlacement objectPlacement = manager.GetObjectPlacement();
+            if (objectPlacement != null) objectPlacement.showSnapPreview = true;
+
+            Camera playerCamera = manager.GetPlayerCamera();
+            Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+            RaycastHit hit;
+            float rayDistance = 3f; // You might want to get this from manager
+
+            if (Physics.Raycast(ray, out hit, rayDistance))
+            {
+                if (hit.collider.CompareTag("JarSnapPoint") && hit.collider.transform.childCount == 0)
+                {
+                    manager.ShowPlaceDownButton();
+
+                    if (Input.GetKeyDown(KeyCode.F) && !isPlacingJar) // Prevent rapid placement here too
+                    {
+                        PlaceJarAtSnap(hit.collider.transform, heldObject);
+                    }
+                    return;
+                }
+            }
+        }
+        else
+        {
+            ObjectPlacement objectPlacement = manager.GetObjectPlacement();
+            if (objectPlacement != null) objectPlacement.showSnapPreview = false;
+        }
+    }
+
+    private void HandleSpatulaPickup(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject == null)
+        {
+            manager.ShowPickupButton();
+            // Item name now shown by ItemDescriptionDisplay
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                // Spatula uses Y=-90 rotation (different from default Y=-180)
+                PickUpObject(target, new Vector3(0.3f, -0.3f, 0.5f), Quaternion.Euler(0, -90, 0));
+            }
+        }
+    }
+
+    private void HandleIceCreamInteraction(GameObject target)
+    {
+        IceCreamContainer iceCreamContainer = target.GetComponent<IceCreamContainer>();
+        GameObject heldObject = manager.GetHeldObject();
+
+        if (iceCreamContainer == null)
+        {
+            // Fallback for old ice cream objects without the container script
+            if (heldObject == null)
+            {
+                manager.ShowPickupButton();
+                // Item name now shown by ItemDescriptionDisplay
+                if (Input.GetKeyDown(KeyCode.E))
+                    PickUpObject(target, new Vector3(0.3f, -0.3f, 0.5f));
+            }
+            return;
+        }
+
+        if (heldObject == null)
+        {
+            manager.ShowPickupButton();
+            // Item name and status now shown by ItemDescriptionDisplay
+            if (Input.GetKeyDown(KeyCode.E))
+                PickUpObject(target, new Vector3(0.3f, -0.3f, 0.5f));
+        }
+    }
+
+    private void HandleCabinetInteraction(RaycastHit hit)
+    {
+        CabinetDoorTrigger cabinet = hit.collider.GetComponent<CabinetDoorTrigger>();
+        if (cabinet == null) return;
+
+        manager.ShowInteractButton();
+        manager.ShowInteraction(cabinet.GetInteractionText());
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            cabinet.ToggleDoor();
+        }
+    }
+
+    private void HandleRefDoorInteraction(RaycastHit hit)
+    {
+        RefDoor refDoor = hit.collider.GetComponent<RefDoor>();
+        if (refDoor == null) return;
+
+        manager.ShowInteractButton();
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            refDoor.ToggleDoor();
+        }
+    }
+
+    private void HandleDoorInteraction(RaycastHit hit)
+    {
+        DoorInteraction door = hit.collider.GetComponent<DoorInteraction>();
+        if (door == null) return;
+
+        manager.ShowInteractButton();
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            door.ToggleDoor();
+        }
+    }
+
+    private void HandleTuronWrapperInteraction(RaycastHit hit)
+    {
+        TuronWrapper wrapper = hit.collider.gameObject.GetComponent<TuronWrapper>();
+        if (wrapper == null) return;
+
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject != null)
+        {
+            if (TryHandleWrapperBoxInteraction(wrapper)) return;
+            if (TryHandleBananaBoxInteraction(wrapper, hit.collider.gameObject)) return;
+            if (TryHandleIngredientJarInteraction(wrapper)) return;
+        }
+        else
+        {
+            HandleEmptyHandsTuronInteraction(wrapper, hit.collider.gameObject);
+        }
+    }
+
+    private bool TryHandleWrapperBoxInteraction(TuronWrapper wrapper)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        Wrapper wrapperBox = heldObject.GetComponent<Wrapper>();
+        if (wrapperBox == null) return false;
+
+        Plate plate = wrapper.GetComponentInParent<Plate>();
+        if (plate == null)
+        {
+            return true;
+        }
+
+        if (plate.HasFood())
+        {
+            manager.ShowInteraction("Plate already has food");
+        }
+        else if (wrapperBox.HasWrappers(1))
+        {
+            manager.ShowInteractButton();
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                if (!wrapperBox.TryPlaceWrapperOnPlate(plate))
+                {
+                }
+            }
+        }
+        else
+        {
+        }
+        return true;
+    }
+
+    private bool TryHandleBananaBoxInteraction(TuronWrapper wrapper, GameObject wrapperObject)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        BananaBox bananaBox = heldObject.GetComponent<BananaBox>();
+        if (bananaBox == null || wrapper.hasBanana || wrapper.isWrapped) return false;
+
+        if (bananaBox.HasBananas(1))
+        {
+            manager.ShowInteractButton();
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                if (bananaBox.TryAddBananaToWrapper(wrapperObject))
+                {
+                }
+            }
+        }
+        else
+        {
+        }
+        return true;
+    }
+
+    private bool TryHandleIngredientJarInteraction(TuronWrapper wrapper)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        IngredientJar jar = heldObject.GetComponent<IngredientJar>();
+        if (jar == null || wrapper.isWrapped) return false;
+
+        if (jar.jarType == IngredientJar.IngredientType.Sugar)
+        {
+            return HandleSugarJarInteraction(wrapper, jar);
+        }
+
+        if (jar.jarType == IngredientJar.IngredientType.Langka)
+        {
+            return HandleLangkaJarInteraction(wrapper, jar);
+        }
+
+        return false;
+    }
+
+    private bool HandleSugarJarInteraction(TuronWrapper wrapper, IngredientJar jar)
+    {
+        if (!wrapper.hasBanana || wrapper.hasSugar) return false;
+
+        return HandleIngredientAddition(jar, "sugar", "banana",
+                                       () =>
+                                       {
+                                           wrapper.hasSugar = true;
+                                           wrapper.UpdateVisuals();
+                                       });
+    }
+
+    private bool HandleLangkaJarInteraction(TuronWrapper wrapper, IngredientJar jar)
+    {
+        if (!wrapper.hasBanana || wrapper.hasLangka) return false;
+
+        return HandleIngredientAddition(jar, "langka", "banana",
+                                       () =>
+                                       {
+                                           wrapper.hasLangka = true;
+                                           wrapper.UpdateVisuals();
+                                       });
+    }
+
+    private bool HandleIngredientAddition(IngredientJar jar, string ingredientName, string targetName, System.Action onSuccess)
+    {
+        if (jar.HasIngredients(1))
+        {
+            manager.ShowInteractButton();
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                onSuccess();
+                jar.UseIngredients(1);
+            }
+        }
+        else
+        {
+        }
+        return true;
+    }
+
+    private void HandleEmptyHandsTuronInteraction(TuronWrapper wrapper, GameObject wrapperObject)
+    {
+        if (!wrapper.IsReadyToWrap()) return;
+
+        manager.ShowInteractButton();
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            WrapTuron(wrapper, wrapperObject);
+        }
+    }
+
+    private void WrapTuron(TuronWrapper wrapper, GameObject wrapperObject)
+    {
+        Plate plate = wrapper.GetComponentInParent<Plate>();
+        if (plate == null) return;
+
+        Transform wrapperTransform = wrapperObject.transform;
+        Vector3 originalPosition = wrapperTransform.position;
+        Quaternion originalRotation = wrapperTransform.rotation;
+
+        Wrapper wrapperBox = Object.FindFirstObjectByType<Wrapper>();
+        if (!ValidateWrapperPrefab(wrapperBox)) return;
+
+        CreateWrappedTuron(plate, wrapperObject, originalPosition, originalRotation, wrapperBox.wrappedFoodPrefab);
+    }
+
+    private bool ValidateWrapperPrefab(Wrapper wrapperBox)
+    {
+        if (wrapperBox == null || wrapperBox.wrappedFoodPrefab == null)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private void CreateWrappedTuron(Plate plate, GameObject wrapperObject, Vector3 position,
+                                   Quaternion rotation, GameObject prefab)
+    {
+        plate.RemoveCurrentFood();
+        Object.Destroy(wrapperObject);
+
+        GameObject uncookedTuron = Object.Instantiate(prefab, position, rotation, plate.foodPlacementPoint);
+        uncookedTuron.transform.localScale = new Vector3(0.15f, 0.15f, 0.15f);
+        uncookedTuron.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+
+        SetupCookableFood(uncookedTuron);
+        plate.SetCurrentFood(uncookedTuron);
+    }
+
+    private void SetupCookableFood(GameObject foodObject)
+    {
+        CookableFood cookable = foodObject.GetComponent<CookableFood>();
+        if (cookable == null)
+            cookable = foodObject.AddComponent<CookableFood>();
+
+        cookable.foodType = CookableFood.FoodType.Turon;
+        cookable.foodState = CookableFood.FoodState.Uncooked;
+        cookable.UpdateTag();
+        
+
+    }
+
+    private void HandleMaisConYeloInteractions(GameObject target)
+    {
+        if (target.CompareTag("PlasticCup"))
+        {
+            HandlePlasticCupInteraction(target);
+        }
+        else if (target.CompareTag("CrushedIce"))
+        {
+            HandleCrushedIceInteraction(target);
+        }
+        else if (target.GetComponent<MaisConYeloContainer>() != null)
+        {
+            HandleMaisContainerInteraction(target);
+        }
+    }
+
+    private void HandlePlasticCupInteraction(GameObject target)
+    {
+        MaisConYeloContainer cup = target.GetComponent<MaisConYeloContainer>();
+        if (cup == null) return;
+
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject == null)
+        {
+            manager.ShowPickupButton();
+            // Item name now shown by ItemDescriptionDisplay
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                PickUpObject(target, new Vector3(0.3f, -0.3f, 0.8f));
+            }
+            return;
+        }
+
+        IngredientJar jar = heldObject.GetComponent<IngredientJar>();
+        if (jar != null && jar.jarType == IngredientJar.IngredientType.Mais)
+        {
+            HandleMaisJarToCupInteraction(cup, jar);
+        }
+    }
+
+    private void HandleSlicingStationInteraction(GameObject target)
+{
+    GameObject heldObject = manager.GetHeldObject();
+    SlicingStation slicingStation = target.GetComponent<SlicingStation>();
+    
+    if (slicingStation == null) return;
+    
+    if (heldObject != null && slicingStation.CanInteract(heldObject))
+    {
+        IngredientJar jar = heldObject.GetComponent<IngredientJar>();
+        string foodName = jar.jarType == IngredientJar.IngredientType.Banana ? "banana" : "sweet potato";
+        
+        manager.ShowInteractButton();
+        manager.ShowInteraction($"Slice {foodName}");
+        
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            slicingStation.OnInteractWithJar(jar);
+        }
+    }
+    else if (heldObject == null)
+    {
+        manager.ShowInteraction("Hold a jar of banana or sweet potato to slice");
+    }
+    else
+    {
+        manager.ShowInteraction("This jar doesn't contain sliceable ingredients");
+    }
+}
+
+    private void HandleMaisJarToCupInteraction(MaisConYeloContainer cup, IngredientJar jar)
+    {
+        if (cup.currentState != MaisConYeloContainer.MaisState.Empty || !jar.HasIngredients(1))
+            return;
+
+        manager.ShowInteractButton();
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            Camera playerCamera = manager.GetPlayerCamera();
+            GameObject newCup = cup.AddMaisFromJar(jar, playerCamera.transform);
+            if (newCup != null)
+            {
+                // Success message handled by the container
+            }
+        }
+    }
+
+    private void HandleCrushedIceInteraction(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        MaisConYeloContainer maisInCup = heldObject?.GetComponent<MaisConYeloContainer>();
+        if (maisInCup == null || maisInCup.currentState != MaisConYeloContainer.MaisState.HasMais)
+            return;
+
+        manager.ShowInteractButton();
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            AddIceToCup(maisInCup, target);
+        }
+    }
+
+    private void AddIceToCup(MaisConYeloContainer maisInCup, GameObject iceTarget)
+    {
+        Camera playerCamera = manager.GetPlayerCamera();
+        GameObject newCup = maisInCup.AddIce(playerCamera.transform);
+        if (newCup != null)
+        {
+            manager.SetHeldObject(newCup);
+        }
+
+        // Note: ShrinkIce() is already called inside maisInCup.AddIce()
+        // No need to call it again here
+    }
+
+    private void HandleMaisContainerInteraction(GameObject target)
+    {
+        MaisConYeloContainer targetContainer = target.GetComponent<MaisConYeloContainer>();
+        if (targetContainer == null) return;
+
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject == null)
+        {
+            HandlePickupMaisContainer(target, targetContainer);
+        }
+        else
+        {
+            HandleHeldObjectWithMaisContainer(targetContainer);
+        }
+    }
+
+    private void HandlePickupMaisContainer(GameObject target, MaisConYeloContainer container)
+    {
+        if (container.currentState == MaisConYeloContainer.MaisState.Empty)
+            return;
+
+        manager.ShowPickupButton();
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            PickUpObject(target, new Vector3(0.3f, -0.3f, 0.8f));
+        }
+    }
+
+    private void HandleHeldObjectWithMaisContainer(MaisConYeloContainer targetContainer)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        MaisConYeloContainer heldContainer = heldObject.GetComponent<MaisConYeloContainer>();
+        if (heldContainer != null && heldContainer.currentState == MaisConYeloContainer.MaisState.HasMaisAndIce)
+        {
+            HandleFinishingFromHeldCup(targetContainer);
+            return;
+        }
+
+        IngredientJar jar = heldObject.GetComponent<IngredientJar>();
+        if (jar != null && jar.jarType == IngredientJar.IngredientType.Mais)
+        {
+            HandleFinishingWithJar(targetContainer, jar);
+        }
+    }
+
+    private void HandleFinishingFromHeldCup(MaisConYeloContainer targetContainer)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        if (targetContainer != null)
+        {
+            if (targetContainer.currentState == MaisConYeloContainer.MaisState.HasMaisAndIce && heldObject != null)
+            {
+                IngredientJar jar = heldObject.GetComponent<IngredientJar>();
+                if (jar != null && jar.jarType == IngredientJar.IngredientType.Mais && jar.HasIngredients(1))
+                {
+                    manager.ShowInteractButton();
+
+                    if (Input.GetKeyDown(KeyCode.E))
+                    {
+                        Camera playerCamera = manager.GetPlayerCamera();
+                        GameObject finishedDessert = targetContainer.FinishDessertFromJar(jar, playerCamera.transform);
+                        if (finishedDessert != null)
+                        {
+                            // Success message handled by the container
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    private void HandleFinishingWithJar(MaisConYeloContainer targetContainer, IngredientJar jar)
+    {
+        if (targetContainer.currentState != MaisConYeloContainer.MaisState.HasMaisAndIce ||
+            !jar.HasIngredients(1))
+            return;
+
+        manager.ShowInteractButton();
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            Camera playerCamera = manager.GetPlayerCamera();
+            GameObject finishedDessert = targetContainer.FinishDessertFromJar(jar, playerCamera.transform);
+            if (finishedDessert != null)
+            {
+                // Success message handled by the container
+            }
+        }
+    }
+
+    private void HandleHaloHaloInteractions(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        
+        // Special case for adding ice when looking at CrushedIce
+        if (target.CompareTag("CrushedIce") && heldObject != null)
+        {
+            HaloHaloContainer heldContainer = heldObject.GetComponent<HaloHaloContainer>();
+            if (heldContainer != null && heldContainer.currentState == HaloHaloContainer.HaloHaloState.HasMonggo)
+            {
+                manager.ShowInteractButton();
+                if (Input.GetKeyDown(KeyCode.E))
+                {
+                    Camera playerCamera = manager.GetPlayerCamera();
+                    var newCup = heldContainer.AddIce(playerCamera.transform);
+                    if (newCup != null)
+                    {
+                        manager.SetHeldObject(newCup);
+                    }
+                }
+            }
+            return;
+        }
+
+        var container = target.GetComponent<HaloHaloContainer>();
+        if (container == null) return;
+
+        try
+        {
+            if (heldObject == null)
+            {
+                manager.ShowPickupButton();
+                if (Input.GetKeyDown(KeyCode.E))
+                    PickUpObject(target, new Vector3(0.3f, -0.3f, 0.8f));
+                return;
+            }
+
+            Camera playerCamera = manager.GetPlayerCamera();
+            bool cupIsHeld = target.transform.IsChildOf(playerCamera.transform);
+
+            IngredientJar jar = heldObject.GetComponent<IngredientJar>();
+            if (jar != null && container.CanAddIngredient(jar.jarType) && !cupIsHeld)
+            {
+                manager.ShowInteractButton();
+                if (Input.GetKeyDown(KeyCode.E))
+                {
+                    var newCup = container.AddIngredientFromJar(jar, playerCamera.transform);
+                    if (newCup != null)
+                    {
+                        // Success message handled by the container
+                    }
+                }
+                return;
+            }
+
+            if (jar != null && jar.jarType == IngredientJar.IngredientType.Langka
+                && container.currentState == HaloHaloContainer.HaloHaloState.HasIceCream && !cupIsHeld)
+            {
+                manager.ShowInteractButton();
+                if (Input.GetKeyDown(KeyCode.E))
+                {
+                    var newCup = container.AddIngredientFromJar(jar, playerCamera.transform);
+                    if (newCup != null)
+                    {
+                        // Success message handled by the container
+                    }
+                }
+                return;
+            }
+
+            if (heldObject.CompareTag("IceCream") && container.currentState == HaloHaloContainer.HaloHaloState.HasIce && !cupIsHeld)
+            {
+                manager.ShowInteractButton();
+                if (Input.GetKeyDown(KeyCode.E))
+                {
+                    var newCup = container.AddIceCream(heldObject, playerCamera.transform);
+                    if (newCup != null)
+                    {
+                        // Play ice cream sound using AudioManager
+                        if (AudioManager.Instance != null)
+                        {
+                            AudioManager.Instance.PlaySFX3D("IceCream", container.transform.position);
+                        }
+                    }
+                }
+                return;
+            }
+
+            if (heldObject.CompareTag("LecheFlan") && container.currentState == HaloHaloContainer.HaloHaloState.HasLangka && !cupIsHeld)
+            {
+                LecheFlanContainer lecheFlanContainer = heldObject.GetComponent<LecheFlanContainer>();
+
+                if (lecheFlanContainer != null)
+                {
+                    if (lecheFlanContainer.HasPortions(1))
+                    {
+                        manager.ShowInteractButton();
+                        // Leche flan portions now shown by ItemDescriptionDisplay
+
+                        if (Input.GetKeyDown(KeyCode.E))
+                        {
+                            lecheFlanContainer.UseLeche(1);
+                            var finished = container.AddLecheFlan(playerCamera.transform);
+                            if (finished != null)
+                            {
+                                // Success message handled by the container
+                            }
+                        }
+                    }
+                    else
+                    {
+                    }
+                }
+                else
+                {
+                    manager.ShowInteractButton();
+                    if (Input.GetKeyDown(KeyCode.E))
+                    {
+                        var finished = container.AddLecheFlan(heldObject, playerCamera.transform);
+                        if (finished != null)
+                        {
+                            Object.Destroy(heldObject);
+                            manager.ClearHeldObject();
+                        }
+                    }
+                }
+                return;
+            }
+        }
+        catch (System.Exception)
+        {
+        }
+    }
+
+    private void HandleCustomerInteraction(CustomerNPC customer, GameObject heldObject)
+    {
+        // First check if holding finished food directly (like food on stick)
+        if (heldObject.CompareTag("FinishedFood"))
+        {
+            CookableFood cookableFood = heldObject.GetComponent<CookableFood>();
+            if (cookableFood != null && cookableFood.foodState == CookableFood.FoodState.FinishedFood)
+            {
+                // Special case: Karioka and Kamotecue on stick must be placed on plate first
+                if (cookableFood.foodType == CookableFood.FoodType.Karioka || 
+                    cookableFood.foodType == CookableFood.FoodType.Kamotecue)
+                {
+                    string foodName = cookableFood.foodType == CookableFood.FoodType.Karioka ? "Karioka" : "Kamotecue";
+                    manager.ShowInteraction($"Put the {foodName} on a plate first", true);
+                    return;
+                }
+                
+                // For other finished foods, allow direct serving
+                manager.ShowInteractButton();
+                if (Input.GetKeyDown(KeyCode.E))
+                {
+                    if (customer.CheckOrder(heldObject))
+                    {
+                        // Complete serve objectives based on food type
+                        CookableFood heldFood = heldObject.GetComponent<CookableFood>();
+                        if (heldFood != null && heldFood.foodState == CookableFood.FoodState.FinishedFood)
+                        {
+                            // For days 1-6, customer serving is handled by GameManager.CustomerServed()
+                            // which tracks the "Serve to customers 10x" objective
+                            // Individual food serving objectives are no longer used for learning days
+                            
+                            // Note: GameManager.CustomerServed() will be called when the customer is actually served
+                        }
+                        
+                        Object.Destroy(heldObject);
+                        manager.ClearHeldObject();
+                    }
+                    else
+                    {
+                        manager.ShowInteraction("Customer doesn't want this food", true);
+                    }
+                }
+                return;
+            }
+        }
+
+        // Handle plate interactions
+        Plate plate = heldObject.GetComponent<Plate>();
+        if (plate != null)
+        {
+            if (plate.HasFood() || plate.HasCookedPalitaw())
+            {
+                manager.ShowInteractButton();
+                if (Input.GetKeyDown(KeyCode.E))
+                {
+                    GameObject foodToCheck = plate.GetCurrentFood();
+                    if (foodToCheck != null)
+                    {
+                        if (customer.CheckOrder(foodToCheck))
+                        {
+                            CookableFood plateFood = foodToCheck.GetComponent<CookableFood>();
+                            if (plateFood != null && plateFood.foodState == CookableFood.FoodState.FinishedFood)
+                            {
+                                // For days 1-6, customer serving is handled by GameManager.CustomerServed()
+                                // which tracks the "Serve to customers 10x" objective
+                                // Individual food serving objectives are no longer used for learning days
+                                
+                                // Note: GameManager.CustomerServed() will be called when the customer is actually served
+                                // This section is just for objective completion of individual food preparation steps
+                            }
+                            Object.Destroy(foodToCheck);
+                            plate.RemoveCurrentFood();
+                            Object.Destroy(heldObject);
+                            manager.ClearHeldObject();
+                        }
+                        else
+                        {
+                            manager.ShowInteraction("Customer doesn't want this food", true);
+                        }
+                    }
+                    else
+                    {
+                        GameObject palitaw = plate.GetCookedPalitaw();
+                        if (palitaw != null && customer.CheckOrder(palitaw))
+                        {
+                            Object.Destroy(palitaw);
+                            plate.RemoveCurrentFood();
+                            Object.Destroy(heldObject);
+                            manager.ClearHeldObject();
+                        }
+                        else
+                        {
+                            manager.ShowInteraction("Customer doesn't want this food", true);
+                        }
+                    }
+                }
+            }
+            return;
+        }
+
+        // Handle other cookable foods (but not finished foods on stick - those are handled above)
+        CookableFood otherCookableFood = heldObject.GetComponent<CookableFood>();
+        if (otherCookableFood != null && !heldObject.CompareTag("FinishedFood"))
+        {
+            manager.ShowInteractButton();
+            manager.ShowInteraction("Give food to customer");
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                if (customer.CheckOrder(heldObject))
+                {
+                    Object.Destroy(heldObject);
+                    manager.ClearHeldObject();
+                }
+                else
+                {
+                    manager.ShowInteraction("Customer doesn't want this food", true);
+                }
+            }
+        }
+    }
+
+    // Placement methods
+    // Public method to reset all placement flags (called when picking up objects or cancelling interactions)
+    public void ResetPlacementFlags()
+    {
+        isPlacingJar = false;
+        isPlacingPot = false;
+        isPlacingPan = false;
+        isPlacingDispenser = false;
+    }
+
+    public void PlaceHeldObject(Vector3 position, Quaternion rotation)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject == null) return;
+
+        // Reset placement flags when placing any object
+        ResetPlacementFlags();
+
+        // Special snap placement for cooking pots and pans
+        ObjectPlacement objectPlacement = manager.GetObjectPlacement();
+        Transform previewSnapPoint = objectPlacement?.GetPreviewSnapPoint();
+        
+        Debug.Log($"PlaceHeldObject: Held object = {heldObject.tag}, Preview snap point = {(previewSnapPoint != null ? previewSnapPoint.name : "null")}");
+        
+        // Handle cooking pot snap placement
+        if (heldObject.CompareTag("CookingPot") && previewSnapPoint != null)
+        {
+            CookingPot pot = heldObject.GetComponent<CookingPot>();
+            if (pot != null)
+            {
+                Debug.Log($"PlaceHeldObject: Placing cooking pot at snap point {previewSnapPoint.name} at position {previewSnapPoint.position}");
+                
+                // Use the snap placement method with the specific snap point
+                bool success = pot.PlaceAtStoveSnapPoint(manager.GetDefaultLayer(), previewSnapPoint);
+                
+                if (success)
+                {
+                    // Clear held object and hide preview
+                    manager.ClearHeldObject();
+                    if (objectPlacement != null)
+                        objectPlacement.DestroyPreview();
+                    
+                    // Play place down sound
+                    if (AudioManager.Instance != null)
+                    {
+                        AudioManager.Instance.PlaySFX3D(DEFAULT_PLACEDOWN_SOUND, previewSnapPoint.position);
+                    }
+                    
+                    return;
+                }
+                else
+                {
+                    Debug.LogWarning("Failed to place cooking pot at snap point, falling back to regular placement");
+                }
+            }
+        }
+        
+        // Handle cooking pan snap placement
+        if (heldObject.CompareTag("CookingPan") && previewSnapPoint != null)
+        {
+            CookingPan pan = heldObject.GetComponent<CookingPan>();
+            if (pan != null)
+            {
+                Debug.Log($"PlaceHeldObject: Placing cooking pan at snap point {previewSnapPoint.name} at position {previewSnapPoint.position}");
+                
+                // Use the snap placement method with the specific snap point
+                bool success = pan.PlaceAtStoveSnapPoint(manager.GetDefaultLayer(), previewSnapPoint);
+                
+                if (success)
+                {
+                    // Clear held object and hide preview
+                    manager.ClearHeldObject();
+                    if (objectPlacement != null)
+                        objectPlacement.DestroyPreview();
+                    
+                    // Play place down sound
+                    if (AudioManager.Instance != null)
+                    {
+                        AudioManager.Instance.PlaySFX3D(DEFAULT_PLACEDOWN_SOUND, previewSnapPoint.position);
+                    }
+                    
+                    return;
+                }
+                else
+                {
+                    Debug.LogWarning("Failed to place cooking pan at snap point, falling back to regular placement");
+                }
+            }
+        }
+
+        // Special handling for OrderBox
+        if (heldObject.CompareTag("OrderBox"))
+        {
+            OrderBox orderBox = heldObject.GetComponent<OrderBox>();
+            if (orderBox != null)
+            {
+                orderBox.OnPlacedDown();
+            }
+        }
+
+        // Special handling for preserving component states
+        PancakeDispenser heldDispenser = null;
+        int savedPancakeCount = 0;
+        CookingOilContainer heldOilContainer = null;
+
+        if (heldObject != null)
+        {
+            heldDispenser = heldObject.GetComponent<PancakeDispenser>();
+            if (heldDispenser != null)
+                savedPancakeCount = heldDispenser.GetRemainingCount();
+                
+            // Save oil container state
+            heldOilContainer = heldObject.GetComponent<CookingOilContainer>();
+        }
+
+        heldObject.transform.SetParent(null);
+        GameObject placedObject = Object.Instantiate(heldObject, heldObject.transform.position, heldObject.transform.rotation);
+
+        Plate newPlate = placedObject.GetComponent<Plate>();
+        if (newPlate != null)
+        {
+            Transform foodPoint = newPlate.foodPlacementPoint;
+            if (foodPoint != null && foodPoint.childCount > 0)
+            {
+                GameObject newFood = foodPoint.GetChild(0).gameObject;
+                newPlate.SetCurrentFood(newFood);
+            }
+            else
+            {
+                newPlate.SetCurrentFood(null);
+            }
+        }
+        
+        // Restore oil container state if needed
+        if (heldOilContainer != null)
+        {
+            CookingOilContainer newOilContainer = placedObject.GetComponent<CookingOilContainer>();
+            if (newOilContainer != null)
+            {
+                newOilContainer.TransferStateFrom(heldOilContainer);
+            }
+        }
+
+        Object.Destroy(heldObject);
+        manager.ClearHeldObject();
+
+        // Play place down sound using AudioManager
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX3D(DEFAULT_PLACEDOWN_SOUND, position);
+        }
+
+        SetLayerRecursively(placedObject, manager.GetDefaultLayer());
+
+        Collider[] colliders = placedObject.GetComponentsInChildren<Collider>();
+        foreach (var col in colliders)
+        {
+            col.enabled = false;
+        }
+
+        manager.StartCoroutine(MovePlacedObject(placedObject, position, rotation, colliders, heldDispenser, savedPancakeCount));
+
+        if (objectPlacement != null)
+            objectPlacement.DestroyPreview();
+    }
+
+    private void PlaceCookingPotWithWater(GameObject pot, Vector3 position, Quaternion rotation)
+    {
+        // Don't destroy and recreate - just move the existing pot
+        pot.transform.SetParent(null);
+        manager.ClearHeldObject();
+        
+        SetLayerRecursively(pot, manager.GetDefaultLayer());
+        
+        // Play place down sound using AudioManager
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX3D(DEFAULT_PLACEDOWN_SOUND, position);
+        }
+        
+        Collider[] colliders = pot.GetComponentsInChildren<Collider>();
+        foreach (var col in colliders)
+        {
+            col.enabled = false;
+        }
+        
+        manager.StartCoroutine(MoveCookingPot(pot, position, rotation, colliders));
+        
+        ObjectPlacement objectPlacement = manager.GetObjectPlacement();
+        if (objectPlacement != null)
+            objectPlacement.DestroyPreview();
+    }
+
+    private System.Collections.IEnumerator MoveCookingPot(GameObject pot, Vector3 targetPos, Quaternion targetRot, Collider[] colliders)
+    {
+        float duration = 0.2f;
+        float elapsed = 0f;
+
+        Vector3 startPos = pot.transform.position;
+        Quaternion startRot = pot.transform.rotation;
+
+        Rigidbody rb = pot.GetComponent<Rigidbody>();
+        if (rb == null)
+            rb = pot.AddComponent<Rigidbody>();
+
+        rb.isKinematic = true;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            pot.transform.position = Vector3.Lerp(startPos, targetPos, t);
+            pot.transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
+            yield return null;
+        }
+
+        pot.transform.position = targetPos;
+        pot.transform.rotation = targetRot;
+
+        yield return new WaitForSeconds(0.1f);
+
+        foreach (var col in colliders)
+            col.enabled = true;
+
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+        }
+
+        // Update the EnvironmentObjectID to store the new position as the initial state
+        // This prevents objects from floating when the next day starts
+        EnvironmentObjectID envObjectID = pot.GetComponent<EnvironmentObjectID>();
+        if (envObjectID != null)
+        {
+            envObjectID.UpdateInitialState();
+        }
+        else
+        {
+            // If the object doesn't have an EnvironmentObjectID, add one and set its initial state
+            envObjectID = pot.AddComponent<EnvironmentObjectID>();
+            envObjectID.UpdateInitialState();
+        }
+    }
+
+    private System.Collections.IEnumerator MovePlacedObject(GameObject obj, Vector3 targetPos, Quaternion targetRot, 
+                                                           Collider[] colliders, PancakeDispenser heldDispenser, int savedPancakeCount)
+    {
+        float duration = 0.2f;
+        float elapsed = 0f;
+
+        Vector3 startPos = obj.transform.position;
+        Quaternion startRot = obj.transform.rotation;
+
+        Rigidbody rb = obj.GetComponent<Rigidbody>();
+        if (rb == null)
+            rb = obj.AddComponent<Rigidbody>();
+
+        rb.isKinematic = true;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            obj.transform.position = Vector3.Lerp(startPos, targetPos, t);
+            obj.transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
+            yield return null;
+        }
+
+        obj.transform.position = targetPos;
+        obj.transform.rotation = targetRot;
+
+        yield return new WaitForSeconds(0.1f);
+
+        foreach (var col in colliders)
+            col.enabled = true;
+
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+        }
+
+        if (heldDispenser != null)
+        {
+            PancakeDispenser placedDispenser = obj.GetComponent<PancakeDispenser>();
+            if (placedDispenser != null)
+            {
+                placedDispenser.SetPancakeCount(savedPancakeCount);
+            }
+        }
+
+        // Update the EnvironmentObjectID to store the new position as the initial state
+        // This prevents objects from floating when the next day starts
+        EnvironmentObjectID envObjectID = obj.GetComponent<EnvironmentObjectID>();
+        if (envObjectID != null)
+        {
+            envObjectID.UpdateInitialState();
+        }
+        else
+        {
+            // If the object doesn't have an EnvironmentObjectID, add one and set its initial state
+            envObjectID = obj.AddComponent<EnvironmentObjectID>();
+            envObjectID.UpdateInitialState();
+        }
+    }
+
+    private void PlacePot(Vector3 position, Quaternion rotation)
+    {
+        if (isPlacingPot) return; // Prevent multiple placements
+        
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject == null || !heldObject.CompareTag("CookingPot")) return;
+
+        CookingPot potScript = heldObject.GetComponent<CookingPot>();
+        if (potScript == null) return;
+
+        isPlacingPot = true; // Set flag immediately
+
+        GameObject pot = heldObject;
+        manager.ClearHeldObject();
+
+        // Get the preview snap point and use it for placement
+        ObjectPlacement objectPlacement = manager.GetObjectPlacement();
+        Transform previewSnapPoint = objectPlacement?.GetPreviewSnapPoint();
+        
+        bool success = false;
+        if (previewSnapPoint != null)
+        {
+            Debug.Log($"ObjectInteractionHandler.PlacePot: Using preview snap point {previewSnapPoint.name}");
+            success = potScript.PlaceAtStoveSnapPoint(manager.GetDefaultLayer(), previewSnapPoint);
+        }
+        else
+        {
+            Debug.LogWarning("ObjectInteractionHandler.PlacePot: No preview snap point, using fallback");
+            success = potScript.PlaceAtStoveSnapPoint(manager.GetDefaultLayer());
+        }
+
+        // Play place down sound using AudioManager
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX3D(DEFAULT_PLACEDOWN_SOUND, position);
+        }
+
+        if (success && objectPlacement != null)
+            objectPlacement.DestroyPreview();
+        else if (!success)
+        {
+            manager.SetHeldObject(pot);
+            Debug.LogWarning("No available snap points for cooking pot placement");
+        }
+        
+        isPlacingPot = false; // Reset flag
+    }
+
+    private void PlaceDispenserAtSnap(PancakeDispenser dispenser)
+    {
+        if (isPlacingDispenser) return; // Prevent multiple placements
+        
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject == null || dispenser == null) return;
+
+        isPlacingDispenser = true; // Set flag immediately
+
+        GameObject dispenserObj = heldObject;
+        manager.ClearHeldObject();
+
+        // Play place down sound using AudioManager
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX3D(DEFAULT_PLACEDOWN_SOUND, dispenserObj.transform.position);
+        }
+
+        ObjectPlacement objectPlacement = manager.GetObjectPlacement();
+        System.Action destroyPreviewAction = objectPlacement != null ? 
+            (System.Action)objectPlacement.DestroyPreview : null;
+
+        dispenser.PlaceAtSnapPoint(manager.GetDefaultLayer(), destroyPreviewAction);
+        
+        isPlacingDispenser = false; // Reset flag
+    }
+
+    private void PlacePanAtSnap(CookingPan pan)
+    {
+        if (isPlacingPan) return; // Prevent multiple placements
+        
+        GameObject heldObject = manager.GetHeldObject();
+        if (heldObject == null || pan == null) return;
+
+        isPlacingPan = true; // Set flag immediately
+
+        GameObject panObj = heldObject;
+        manager.ClearHeldObject();
+
+        // Get the preview snap point and use it for placement
+        ObjectPlacement objectPlacement = manager.GetObjectPlacement();
+        Transform previewSnapPoint = objectPlacement?.GetPreviewSnapPoint();
+        
+        bool success = false;
+        if (previewSnapPoint != null)
+        {
+            Debug.Log($"ObjectInteractionHandler.PlacePanAtSnap: Using preview snap point {previewSnapPoint.name}");
+            success = pan.PlaceAtStoveSnapPoint(manager.GetDefaultLayer(), previewSnapPoint);
+        }
+        else
+        {
+            Debug.LogWarning("ObjectInteractionHandler.PlacePanAtSnap: No preview snap point, using fallback");
+            success = pan.PlaceAtStoveSnapPoint(manager.GetDefaultLayer());
+        }
+        
+        // Play place down sound only if placement was successful
+        if (success && AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX3D(DEFAULT_PLACEDOWN_SOUND, panObj.transform.position);
+        }
+        
+        if (success && objectPlacement != null)
+            objectPlacement.DestroyPreview();
+        else if (!success)
+        {
+            manager.SetHeldObject(panObj);
+        }
+        
+        isPlacingPan = false; // Reset flag
+    }
+    public void PickUpObject(GameObject obj, Vector3 positionOffset, Quaternion customRotation = default)
+{
+    GameObject heldObject = manager.GetHeldObject();
+    if (heldObject != null) return;
+
+    // Check if picking up a plate to complete objective
+    if (obj.CompareTag("Plate"))
+    {
+        ObjectiveHelper.CompleteActiveObjective(ObjectiveHelper.Day.MinaTamisDebut, ObjectiveHelper.MinaTamisDebutObjectives.GetPlate);
+    }
+
+    // Reset all placement flags when picking up any object
+    ResetPlacementFlags();
+
+    manager.SetHeldObject(obj);
+    SetLayerRecursively(obj, manager.GetPlayerLayer());
+
+    Collider[] colliders = obj.GetComponentsInChildren<Collider>();
+    foreach (var col in colliders)
+        col.enabled = false;
+
+    Rigidbody rb = obj.GetComponent<Rigidbody>();
+    if (rb != null)
+    {
+        rb.isKinematic = true;
+        rb.useGravity = false;
+    }
+
+    Camera playerCamera = manager.GetPlayerCamera();
+    obj.transform.SetParent(playerCamera.transform);
+
+    // Special handling for OrderBox
+    if (obj.CompareTag("OrderBox"))
+    {
+        OrderBox orderBox = obj.GetComponent<OrderBox>();
+        if (orderBox != null)
+        {
+            orderBox.OnPickedUp();
+        }
+        
+        // Play pickup sound using AudioManager
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX3D("PickUp", obj.transform.position);
+        }
+    }
+    // Special handling for CookingPot - reset stove flags
+    else if (obj.CompareTag("CookingPot"))
+    {
+        CookingPot pot = obj.GetComponent<CookingPot>();
+        if (pot != null)
+        {
+            pot.OnPickedUp();
+        }
+        
+        // Play general pickup sound
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX3D(DEFAULT_PICKUP_SOUND, obj.transform.position);
+        }
+    }
+    // Special handling for CookingPan - reset stove flags
+    else if (obj.CompareTag("CookingPan"))
+    {
+        CookingPan pan = obj.GetComponent<CookingPan>();
+        if (pan != null)
+        {
+            pan.OnPickedUp();
+        }
+        
+        // Play general pickup sound
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX3D(DEFAULT_PICKUP_SOUND, obj.transform.position);
+        }
+    }
+    else if (obj.CompareTag("IcePack"))
+    {
+        // Play ice pickup sound using AudioManager
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX3D("IcePickup", obj.transform.position);
+        }
+    }
+    else
+    {
+        // Play general pickup sound for all other objects
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX3D(DEFAULT_PICKUP_SOUND, obj.transform.position);
+        }
+    }
+
+    manager.StartCoroutine(PositionHeldObject(obj, positionOffset, customRotation));
+    manager.ClearInteraction();
+}
+
+    private System.Collections.IEnumerator PositionHeldObject(GameObject obj, Vector3 positionOffset, Quaternion targetRotation = default)
+    {
+        if (obj == null) yield break;
+
+        Vector3 startPos = obj.transform.localPosition;
+        Quaternion startRot = obj.transform.localRotation;
+
+        // Fixed: Default rotation is now Y=-180 for ALL objects (except spatula and stick which use custom rotations)
+        if (targetRotation == default)
+            targetRotation = Quaternion.Euler(0, -180, 0);
+
+        float duration = 0.2f;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            if (obj == null) yield break;
+
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            obj.transform.localPosition = Vector3.Lerp(startPos, positionOffset, t);
+            obj.transform.localRotation = Quaternion.Slerp(startRot, targetRotation, t);
+
+            yield return null;
+        }
+
+        if (obj != null)
+        {
+            obj.transform.localPosition = positionOffset;
+            obj.transform.localRotation = targetRotation;
+
+            Collider[] colliders = obj.GetComponentsInChildren<Collider>();
+            foreach (var col in colliders)
+                col.enabled = true;
+        }
+    }
+
+    public void SetLayerRecursively(GameObject obj, int layer)
+    {
+        if (obj == null) return;
+        obj.layer = layer;
+        foreach (Transform child in obj.transform)
+        {
+            SetLayerRecursively(child.gameObject, layer);
+        }
+    }
+
+    private bool IsCookedFood(GameObject obj)
+    {
+        CookableFood cookable = obj?.GetComponent<CookableFood>();
+        return cookable != null && cookable.IsCooked();
+    }
+
+    private void HandleSticksPackageInteraction(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        
+        if (heldObject != null && heldObject.CompareTag("Stick"))
+        {
+            // Return stick to package (this destroys the stick)
+            manager.ShowInteractButton();
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                Object.Destroy(heldObject);
+                manager.ClearHeldObject();
+            }
+        }
+        else if (heldObject == null)
+        {
+            // Take sticks package
+            HandleSimplePickupOptimized(target, "SticksPackage");
+        }
+        else
+        {
+        }
+    }
+
+    private void HandleRadioInteraction(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        
+        // Only allow radio interaction when not holding anything
+        if (heldObject != null)
+        {
+            manager.ShowInteraction("Put down item to use radio");
+            return;
+        }
+        
+        RadioInteractable radio = target.GetComponent<RadioInteractable>();
+        if (radio == null) 
+        {
+            // Fallback for old Interactable components
+            Interactable oldRadio = target.GetComponent<Interactable>();
+            if (oldRadio == null) return;
+            
+            manager.ShowInteractButton();
+            manager.ShowInteraction("Switch radio channel");
+            
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                oldRadio.Interact();
+            }
+            return;
+        }
+        
+        // Show the appropriate interaction text based on radio state
+        string interactionText = radio.GetInteractionText();
+        manager.ShowInteraction(interactionText);
+        manager.ShowInteractButton();
+        
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            radio.Interact();
+        }
+    }
+
+    private void HandleBananaTrayInteraction(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        BananaTray tray = target.GetComponent<BananaTray>();
+        
+        if (tray == null) return;
+        
+        // If holding a plate, try to take banana from tray
+        if (heldObject != null)
+        {
+            if (heldObject.CompareTag("Plate"))
+            {
+                Plate plate = heldObject.GetComponent<Plate>();
+                if (plate != null && tray.GetCurrentQuantity() > 0)
+                {
+                    manager.ShowInteractButton();
+                    manager.ShowInteraction("Take sliced banana");
+                    
+                    if (Input.GetKeyDown(KeyCode.E))
+                    {
+                        tray.TryTakeBanana(plate);
+                    }
+                }
+                else if (plate != null && tray.GetCurrentQuantity() == 0)
+                {
+                    manager.ShowInteraction("No sliced banana available");
+                }
+                else
+                {
+                    manager.ShowInteraction("Need a proper plate to take banana");
+                }
+            }
+            else
+            {
+                manager.ShowInteraction("Need a plate to take banana");
+            }
+        }
+        else
+        {
+            // Show tray info when not holding anything
+            manager.ShowInteraction($"Sliced banana: {tray.GetCurrentQuantity()}");
+        }
+    }
+
+    private void HandleKamoteTrayInteraction(GameObject target)
+    {
+        GameObject heldObject = manager.GetHeldObject();
+        KamoteTray tray = target.GetComponent<KamoteTray>();
+        
+        if (tray == null) return;
+        
+        // If holding a plate, try to take kamote from tray
+        if (heldObject != null)
+        {
+            if (heldObject.CompareTag("Plate"))
+            {
+                Plate plate = heldObject.GetComponent<Plate>();
+                if (plate != null && tray.GetCurrentQuantity() > 0)
+                {
+                    manager.ShowInteractButton();
+                    manager.ShowInteraction("Take sliced kamote");
+                    
+                    if (Input.GetKeyDown(KeyCode.E))
+                    {
+                        tray.TryTakeKamote(plate);
+                    }
+                }
+                else if (plate != null && tray.GetCurrentQuantity() == 0)
+                {
+                    manager.ShowInteraction("No sliced kamote available");
+                }
+                else
+                {
+                    manager.ShowInteraction("Need a proper plate to take kamote");
+                }
+            }
+            else
+            {
+                manager.ShowInteraction("Need a plate to take kamote");
+            }
+        }
+        else
+        {
+            // Show tray info when not holding anything
+            manager.ShowInteraction($"Sliced kamote: {tray.GetCurrentQuantity()}");
+        }
+    }
+
+private void HandleStickInteraction(GameObject target)
+{
+    GameObject heldObject = manager.GetHeldObject();
+    
+    if (heldObject == null)
+    {
+        // Check if this stick belongs to a jar
+        SticksJar parentJar = target.GetComponentInParent<SticksJar>();
+        if (parentJar != null)
+        {
+            manager.ShowPickupButton();
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                // Store the original world scale BEFORE any operations
+                Vector3 originalWorldScale = target.transform.lossyScale;
+                
+                // Simple: Just duplicate and disable the original
+                GameObject duplicateStick = Object.Instantiate(target);
+                duplicateStick.name = "HeldStick";
+                duplicateStick.tag = "Stick";
+                duplicateStick.transform.SetParent(null);
+                duplicateStick.SetActive(true);
+                
+                // Restore the world scale after instantiation
+                duplicateStick.transform.localScale = originalWorldScale;
+                
+                // Disable the original stick in the jar
+                target.SetActive(false);
+                parentJar.StickTaken(target);
+                
+                // Refresh jar state to ensure accuracy
+                parentJar.RefreshJarState();
+                
+                // Stick uses Y=-90 rotation (different from default Y=-180)
+                PickUpObject(duplicateStick, new Vector3(0.3f, -0.3f, 0.5f), Quaternion.Euler(0, -90, 0));
+            }
+        }
+        else
+        {
+            // For loose sticks
+            manager.ShowPickupButton();
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                // Stick uses Y=-90 rotation (different from default Y=-180)
+                PickUpObject(target, new Vector3(0.3f, -0.3f, 0.5f), Quaternion.Euler(0, -90, 0));
+            }
+        }
+    }
+    else if (heldObject.CompareTag("Stick"))
+    {
+    }
+    else
+    {
+        manager.ShowInteraction("Can't take stick while holding something else");
+    }
+}
+
+private void HandleSticksJarInteraction(GameObject target)
+{
+    GameObject heldObject = manager.GetHeldObject();
+    SticksJar sticksJar = target.GetComponent<SticksJar>();
+    
+    if (sticksJar == null)
+    {
+
+        return;
+    }
+    
+    if (heldObject != null && heldObject.CompareTag("Stick"))
+    {
+        if (sticksJar.CanAcceptStick())
+        {
+            manager.ShowInteractButton();
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                if (sticksJar.ReturnStick())
+                {
+                    Object.Destroy(heldObject);
+                    manager.ClearHeldObject();
+                }
+                else
+                {
+                }
+            }
+        }
+        else
+        {
+        }
+    }
+    else if (heldObject != null && heldObject.CompareTag("SticksPackage"))
+    {
+        SticksPackage package = heldObject.GetComponent<SticksPackage>();
+        if (package != null)
+        {
+            if (sticksJar.IsEmpty())
+            {
+                manager.ShowInteractButton();
+                // Package refill count now shown by ItemDescriptionDisplay - show action only
+                manager.ShowInteraction("Refill jar");
+                if (Input.GetKeyDown(KeyCode.E))
+                {
+                    Debug.Log("Attempting to refill jar...");
+                    sticksJar.DebugJarStatus(); // Debug jar state before refill
+                    
+                    if (package.RefillJar(sticksJar))
+                    {
+                        ObjectiveHelper.CompleteActiveObjective(ObjectiveHelper.Day.ThreeSweetTreats, ObjectiveHelper.ThreeSweetTreatsObjectives.RefillStickHolder);
+                        Debug.Log("Jar refill successful!");
+                        sticksJar.RefreshJarState(); // Refresh state after refill
+                        sticksJar.DebugJarStatus(); // Debug jar state after refill
+                        
+                        // Check if package was destroyed (no refills left)
+                        if (package == null || package.refillsRemaining <= 0)
+                        {
+                            manager.ClearHeldObject();
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Jar refill failed!");
+                        sticksJar.DebugJarStatus(); // Debug why it failed
+                    }
+                }
+            }
+            else
+            {
+                int remainingSticks = sticksJar.GetRemainingSticks();
+                manager.ShowInteraction($"Jar must be empty to refill (has {remainingSticks} sticks)");
+                
+                // Debug: Allow force empty for testing by holding F key
+                if (Input.GetKey(KeyCode.F))
+                {
+                    manager.ShowInteraction("Hold F to force empty jar (DEBUG)");
+                    if (Input.GetKeyDown(KeyCode.E))
+                    {
+                        sticksJar.ForceEmpty();
+                        Debug.Log("DEBUG: Jar forcibly emptied!");
+                    }
+                }
+            }
+        }
+    }
+    else if (heldObject == null)
+    {
+        // Allow picking up sticks from jar when hands are empty
+        if (sticksJar.HasSticksAvailable())
+        {
+            manager.ShowPickupButton();
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                GameObject stickToTake = sticksJar.GetAvailableStick();
+                if (stickToTake != null)
+                {
+                    // Store the original world scale BEFORE any operations
+                    Vector3 originalWorldScale = stickToTake.transform.lossyScale;
+                    
+                    // Create a duplicate stick for the player to hold
+                    GameObject duplicateStick = Object.Instantiate(stickToTake);
+                    duplicateStick.name = "HeldStick";
+                    duplicateStick.tag = "Stick";
+                    duplicateStick.transform.SetParent(null);
+                    duplicateStick.SetActive(true);
+                    
+                    // Restore the world scale after instantiation
+                    duplicateStick.transform.localScale = originalWorldScale;
+                    
+                    // Disable the original stick in the jar
+                    stickToTake.SetActive(false);
+                    sticksJar.StickTaken(stickToTake);
+                    
+                    // Refresh jar state to ensure accuracy
+                    sticksJar.RefreshJarState();
+                    
+                    // Stick uses Y=-90 rotation (different from default Y=-180)
+                    PickUpObject(duplicateStick, new Vector3(0.3f, -0.3f, 0.5f), Quaternion.Euler(0, -90, 0));
+                }
+            }
+        }
+        // Stick count now shown by ItemDescriptionDisplay
+    }
+    else
+    {
+        manager.ShowInteraction("Can only return sticks or use sticks package with jar");
+    }
+}
+
+private bool HandleSimpleSinkInteraction(GameObject target, GameObject heldObject)
+{
+    SimpleSink sink = target.GetComponent<SimpleSink>();
+    if (sink == null) return false;
+    
+    // If no object is held, don't handle this interaction
+    if (heldObject == null) return false;
+    
+    // Check if the sink can actually be activated for this object
+    if (sink.CanActivate(heldObject))
+    {
+        // Show the cleaning message
+        string cleaningMessage = sink.GetCleaningMessage(heldObject);
+        if (!string.IsNullOrEmpty(cleaningMessage))
+        {
+            manager.ShowInteractButton();
+            manager.ShowInteraction(cleaningMessage.ToLower());
+            
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                sink.StartCleaning(heldObject);
+            }
+        }
+        return true; // We handled this interaction - prevents F key placement
+    }
+    
+    // IMPORTANT: If sink can't be activated for this object, return false
+    return false;
+}
+
+// Check if a stove snap point is already occupied by another cooking pot or pan
+private bool IsStoveSnapPointOccupied(Transform snapPoint)
+{
+    if (snapPoint == null) return true;
+
+    // Find all cooking pots and pans in the scene
+    CookingPot[] allPots = UnityEngine.Object.FindObjectsByType<CookingPot>(FindObjectsSortMode.None);
+    CookingPan[] allPans = UnityEngine.Object.FindObjectsByType<CookingPan>(FindObjectsSortMode.None);
+
+    float snapThreshold = 0.5f; // Distance threshold to consider something "at" the snap point
+
+    // Check if any pot is at this snap point
+    foreach (CookingPot pot in allPots)
+    {
+        if (pot.isSnappedToStove && Vector3.Distance(pot.transform.position, snapPoint.position) < snapThreshold)
+        {
+            return true;
+        }
+    }
+
+    // Check if any pan is at this snap point
+    foreach (CookingPan pan in allPans)
+    {
+        if (pan.isSnappedToStove && Vector3.Distance(pan.transform.position, snapPoint.position) < snapThreshold)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+}

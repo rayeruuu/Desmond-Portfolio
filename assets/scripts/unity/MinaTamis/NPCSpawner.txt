@@ -1,0 +1,518 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class NPCSpawner : MonoBehaviour
+{
+    [Header("Spawn Settings")]
+    public GameObject[] npcPrefabs;
+    public Transform[] spawnPoints;
+    public Transform[] wanderPoints;
+    public Transform[] exitPoints;
+    public float minSpawnTime = 10f;
+    public float maxSpawnTime = 30f;
+    public int maxNPCsActive = 10;
+    
+    [Header("NPC Type Settings")]
+    [Range(0f, 1f)]
+    public float customerChance = 0.6f; // 60% chance to spawn as customer, 40% as wanderer
+    
+    [Header("Wander Settings")]
+    public float minWanderTime = 10f;
+    public float maxWanderTime = 30f;
+    public float minWandererLifetime = 30f; // How long wanderer-only NPCs stay in scene
+    public float maxWandererLifetime = 120f;
+    
+    [Header("Despawn Settings")]
+    public float despawnDelay = 2f;
+    
+    private List<GameObject> activeNPCs = new List<GameObject>(); // Changed to GameObject to handle both types
+    private bool isSpawning = false;
+    private static NPCSpawner instance;
+    private Coroutine spawnCoroutine; // Track the spawning coroutine
+
+    private void Awake()
+    {
+        instance = this;
+    }
+
+    private void Start()
+    {
+        if (npcPrefabs.Length == 0)
+        {
+            Debug.LogError("No NPC prefabs assigned to spawner!");
+            return;
+        }
+        
+        if (spawnPoints.Length == 0)
+        {
+            Debug.LogError("No spawn points assigned to spawner!");
+            return;
+        }
+        
+        if (wanderPoints.Length == 0)
+        {
+            Debug.LogWarning("No wander points assigned to spawner! NPCs won't wander properly.");
+        }
+        
+        if (exitPoints.Length == 0)
+        {
+            Debug.LogWarning("No exit points assigned! NPCs won't be able to despawn properly.");
+        }
+        
+        // Wait a bit before starting to allow GameManager to finish initialization
+        StartCoroutine(DelayedStart());
+    }
+    
+    private IEnumerator DelayedStart()
+    {
+        // Wait 2 frames to ensure GameManager and other systems are initialized
+        yield return null;
+        yield return null;
+        
+        Debug.Log("NPCSpawner: Starting delayed initialization");
+        StartSpawning();
+    }
+
+    // Add public method to start/restart spawning
+    public void StartSpawning()
+    {
+        if (spawnCoroutine != null)
+        {
+            StopCoroutine(spawnCoroutine);
+            spawnCoroutine = null;
+        }
+        
+        // Check if we have the minimum requirements
+        if (npcPrefabs == null || npcPrefabs.Length == 0)
+        {
+            Debug.LogError("NPCSpawner: Cannot start spawning - no NPC prefabs assigned!");
+            return;
+        }
+        
+        if (spawnPoints == null || spawnPoints.Length == 0)
+        {
+            Debug.LogError("NPCSpawner: Cannot start spawning - no spawn points assigned!");
+            return;
+        }
+        
+        isSpawning = true;
+        spawnCoroutine = StartCoroutine(SpawnNPCs());
+        Debug.Log($"NPCSpawner: Spawning started - Max NPCs: {maxNPCsActive}, Customer Chance: {customerChance:F2}, Spawn Time: {minSpawnTime:F1}-{maxSpawnTime:F1}s");
+    }
+
+    // Add public method to stop spawning
+    public void StopSpawning()
+    {
+        isSpawning = false;
+        if (spawnCoroutine != null)
+        {
+            StopCoroutine(spawnCoroutine);
+            spawnCoroutine = null;
+        }
+        Debug.Log("NPC Spawning stopped");
+    }
+
+    // Add public method to clear all NPCs
+    public void ClearAllNPCs()
+    {
+        Debug.Log($"NPCSpawner: Clearing {activeNPCs.Count} active NPCs");
+        
+        // Create a copy of the list to avoid modification during iteration
+        List<GameObject> npcsToDestroy = new List<GameObject>(activeNPCs);
+        activeNPCs.Clear();
+        
+        int destroyedCount = 0;
+        foreach (GameObject npc in npcsToDestroy)
+        {
+            if (npc != null)
+            {
+                Destroy(npc);
+                destroyedCount++;
+            }
+        }
+        
+        Debug.Log($"NPCSpawner: {destroyedCount} NPCs destroyed, active list cleared");
+    }
+
+    // Add public method to reset spawner for new day
+    public void ResetForNewDay()
+    {
+        Debug.Log("NPCSpawner: Resetting for new day");
+        
+        // Stop current spawning
+        StopSpawning();
+        
+        // Clear all existing NPCs
+        ClearAllNPCs();
+        
+        // Wait a bit then restart spawning to ensure everything is properly cleaned up
+        StartCoroutine(RestartSpawningAfterDelay());
+    }
+
+    private IEnumerator RestartSpawningAfterDelay()
+    {
+        // Wait a bit for cleanup to complete
+        yield return new WaitForSeconds(0.5f);
+        
+        // Restart spawning
+        StartSpawning();
+        
+        Debug.Log("NPCSpawner: Restarted after new day reset");
+    }
+    
+    // Static method for NPCs to access exit points
+    public static Transform GetRandomExitPoint()
+    {
+        if (instance != null && instance.exitPoints != null && instance.exitPoints.Length > 0)
+        {
+            return instance.exitPoints[Random.Range(0, instance.exitPoints.Length)];
+        }
+        return null;
+    }
+    
+    // Static method for customer NPCs to request despawn
+    public static void RequestDespawn(CustomerNPC npc)
+    {
+        if (instance != null && npc != null)
+        {
+            instance.StartCoroutine(instance.DespawnCustomerNPC(npc));
+        }
+    }
+    
+    // Static method for wanderer NPCs to request despawn
+    public static void RequestWandererDespawn(GameObject wandererNPC)
+    {
+        if (instance != null && wandererNPC != null)
+        {
+            instance.StartCoroutine(instance.DespawnWandererNPC(wandererNPC));
+        }
+    }
+    
+    private IEnumerator DespawnCustomerNPC(CustomerNPC npc)
+    {
+        if (npc != null)
+        {
+            // Remove from active list
+            if (activeNPCs.Contains(npc.gameObject))
+            {
+                activeNPCs.Remove(npc.gameObject);
+            }
+            
+            // Wait for despawn delay
+            yield return new WaitForSeconds(despawnDelay);
+            
+            // Destroy the NPC
+            if (npc != null)
+            {
+                Destroy(npc.gameObject);
+            }
+        }
+    }
+    
+    private IEnumerator DespawnWandererNPC(GameObject wandererNPC)
+    {
+        if (wandererNPC != null)
+        {
+            // Remove from active list
+            if (activeNPCs.Contains(wandererNPC))
+            {
+                activeNPCs.Remove(wandererNPC);
+            }
+            
+            // Wait for despawn delay
+            yield return new WaitForSeconds(despawnDelay);
+            
+            // Destroy the NPC
+            if (wandererNPC != null)
+            {
+                Destroy(wandererNPC);
+            }
+        }
+    }
+    private IEnumerator SpawnNPCs()
+    {
+        Debug.Log("NPC Spawning coroutine started");
+        
+        while (isSpawning)
+        {
+            // Check if store is open for customer behavior logic
+            bool storeIsOpen = IsStoreOpen();
+            
+            // Always spawn NPCs (whether store is open or closed)
+            if (activeNPCs.Count < maxNPCsActive)
+            {
+                Debug.Log($"Attempting to spawn NPC. Current active: {activeNPCs.Count}/{maxNPCsActive}");
+                SpawnNPC();
+            }
+            else
+            {
+                Debug.Log($"Max NPCs reached ({maxNPCsActive}), not spawning new NPCs");
+            }
+            
+            // Use random spawn time between min and max
+            float spawnDelay = Random.Range(minSpawnTime, maxSpawnTime);
+            Debug.Log($"Waiting {spawnDelay:F1} seconds before next spawn attempt");
+            yield return new WaitForSeconds(spawnDelay);
+        }
+        
+        Debug.Log("NPC Spawning coroutine ended");
+    }
+    
+    // Add this helper method to check if store is open
+    private bool IsStoreOpen()
+    {
+        // Find the FrontWindow component to check store state
+        FrontWindow frontWindow = FindFirstObjectByType<FrontWindow>();
+        if (frontWindow != null)
+        {
+            return frontWindow.IsStoreOpen();
+        }
+        
+        // If no FrontWindow found, default to store being closed
+        return false;
+    }
+    
+    private void SpawnNPC()
+    {
+        // Validate prefabs and spawn points
+        if (npcPrefabs == null || npcPrefabs.Length == 0)
+        {
+            Debug.LogError("NPCSpawner: No NPC prefabs available for spawning!");
+            return;
+        }
+        
+        if (spawnPoints == null || spawnPoints.Length == 0)
+        {
+            Debug.LogError("NPCSpawner: No spawn points available for spawning!");
+            return;
+        }
+        
+        // Select random prefab and spawn point
+        GameObject npcPrefab = npcPrefabs[Random.Range(0, npcPrefabs.Length)];
+        Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
+        
+        if (npcPrefab == null)
+        {
+            Debug.LogError("NPCSpawner: Selected NPC prefab is null!");
+            return;
+        }
+        
+        if (spawnPoint == null)
+        {
+            Debug.LogError("NPCSpawner: Selected spawn point is null!");
+            return;
+        }
+        
+        // Instantiate NPC
+        GameObject npcObject = Instantiate(npcPrefab, spawnPoint.position, spawnPoint.rotation);
+        
+        if (npcObject == null)
+        {
+            Debug.LogError("NPCSpawner: Failed to instantiate NPC!");
+            return;
+        }
+        
+        // Randomize shirt color
+        RandomizeNPCAppearance(npcObject);
+        
+        // Decide if this NPC should be a customer or just a wanderer
+        bool shouldBeCustomer = Random.Range(0f, 1f) <= customerChance;
+        
+        Debug.Log($"NPCSpawner: Spawning NPC as {(shouldBeCustomer ? "Customer" : "Wanderer")}, customer chance: {customerChance:F2}");
+        
+        if (shouldBeCustomer)
+        {
+            // Check if it has CustomerNPC component
+            CustomerNPC npc = npcObject.GetComponent<CustomerNPC>();
+            if (npc != null)
+            {
+                // Add to active NPCs list
+                activeNPCs.Add(npcObject);
+                
+                // Start customer behavior (wander then join queue)
+                StartCoroutine(CustomerBehavior(npc));
+                
+                Debug.Log($"Spawned Customer NPC: {npcObject.name}, Total active NPCs: {activeNPCs.Count}");
+            }
+            else
+            {
+                Debug.LogWarning($"NPC prefab {npcPrefab.name} doesn't have CustomerNPC component, spawning as wanderer instead");
+                SpawnAsWanderer(npcObject);
+            }
+        }
+        else
+        {
+            // Spawn as wanderer-only NPC
+            SpawnAsWanderer(npcObject);
+        }
+    }
+    
+    private void SpawnAsWanderer(GameObject npcObject)
+    {
+        if (npcObject == null)
+        {
+            Debug.LogError("NPCSpawner: Cannot spawn wanderer - npcObject is null!");
+            return;
+        }
+        
+        // Remove CustomerNPC component if it exists (to prevent ordering behavior)
+        CustomerNPC customerComponent = npcObject.GetComponent<CustomerNPC>();
+        if (customerComponent != null)
+        {
+            Destroy(customerComponent);
+        }
+        
+        // Add to active NPCs list
+        activeNPCs.Add(npcObject);
+        
+        // Start wanderer-only behavior
+        StartCoroutine(WandererOnlyBehavior(npcObject));
+        
+        Debug.Log($"Spawned Wanderer NPC: {npcObject.name}, Total active NPCs: {activeNPCs.Count}");
+    }
+    
+    private IEnumerator CustomerBehavior(CustomerNPC npc)
+{
+    if (npc == null || wanderPoints.Length == 0)
+        yield break;
+    
+    // Make the NPC wander for a random amount of time
+    float wanderDuration = Random.Range(minWanderTime, maxWanderTime);
+    float wanderTimer = 0f;
+    
+    // Make sure NPC has required components
+    NPCWanderer wanderer = npc.GetComponent<NPCWanderer>();
+    if (wanderer == null)
+    {
+        wanderer = npc.gameObject.AddComponent<NPCWanderer>();
+        wanderer.wanderPoints = wanderPoints;
+    }
+    
+    // Start wandering
+    wanderer.StartWandering();
+    
+    // Wait for wander duration
+    while (wanderTimer < wanderDuration)
+    {
+        wanderTimer += Time.deltaTime;
+        
+        // Check if NPC still exists
+        if (npc == null)
+            yield break;
+            
+        yield return null;
+    }
+    
+    // Set flag that this NPC should try to join queue
+    wanderer.SetShouldJoinQueue(true);
+    
+    // Stop wandering and attempt to join queue (will continue wandering if queue is full)
+    if (wanderer != null)
+        wanderer.StopWandering();
+}
+    
+    private IEnumerator WandererOnlyBehavior(GameObject npcObject)
+    {
+        if (npcObject == null || wanderPoints.Length == 0)
+            yield break;
+        
+        // Set lifetime for this wanderer
+        float lifetime = Random.Range(minWandererLifetime, maxWandererLifetime);
+        float lifetimeTimer = 0f;
+        
+        // Add NPCWanderer component
+        NPCWanderer wanderer = npcObject.GetComponent<NPCWanderer>();
+        if (wanderer == null)
+        {
+            wanderer = npcObject.AddComponent<NPCWanderer>();
+            wanderer.wanderPoints = wanderPoints;
+        }
+        
+        // Start wandering
+        wanderer.StartWandering();
+        
+        // Let it wander for its entire lifetime
+        while (lifetimeTimer < lifetime)
+        {
+            lifetimeTimer += Time.deltaTime;
+            
+            // Check if NPC still exists
+            if (npcObject == null)
+                yield break;
+                
+            yield return null;
+        }
+        
+        // Stop wandering and exit
+        if (wanderer != null)
+        {
+            wanderer.StopWandering();
+        }
+        
+        // Add exit behavior for wanderer
+        NPCExitBehavior exitBehavior = npcObject.GetComponent<NPCExitBehavior>();
+        if (exitBehavior == null)
+        {
+            exitBehavior = npcObject.AddComponent<NPCExitBehavior>();
+        }
+        
+        exitBehavior.ExitScene();
+    }
+    
+    private void OnDestroy()
+    {
+        StopSpawning();
+    }
+
+
+private void RandomizeNPCAppearance(GameObject npcObject)
+{
+    // Get or add the appearance randomizer component
+    NPCAppearanceRandomizer appearanceRandomizer = npcObject.GetComponent<NPCAppearanceRandomizer>();
+    if (appearanceRandomizer == null)
+    {
+        appearanceRandomizer = npcObject.AddComponent<NPCAppearanceRandomizer>();
+        appearanceRandomizer.createMaterialInstances = true; // Create material instances for individual colors
+    }
+    
+    // Force the setting since we want individual colors
+    appearanceRandomizer.createMaterialInstances = true;
+    
+    // Randomize all appearance aspects
+    appearanceRandomizer.RandomizeAllAppearance();
+}
+
+// Public method to force immediate spawn (useful for testing)
+    public void ForceSpawnNPC()
+    {
+        if (activeNPCs.Count >= maxNPCsActive)
+        {
+            Debug.Log($"NPCSpawner: Cannot force spawn - already at max capacity ({maxNPCsActive})");
+            return;
+        }
+        
+        Debug.Log("NPCSpawner: Force spawning NPC immediately");
+        SpawnNPC();
+    }
+    
+    // Public method to get current spawner status
+    public string GetSpawnerStatus()
+    {
+        return $"NPCSpawner Status - Active: {activeNPCs.Count}/{maxNPCsActive}, Spawning: {isSpawning}, Customer Chance: {customerChance:F2}";
+    }
+
+    private void OnValidate()
+    {
+        // Ensure sane values in the inspector
+        maxNPCsActive = Mathf.Max(1, maxNPCsActive);
+        minSpawnTime = Mathf.Max(0.1f, minSpawnTime);
+        maxSpawnTime = Mathf.Max(minSpawnTime, maxSpawnTime);
+        customerChance = Mathf.Clamp01(customerChance);
+        minWanderTime = Mathf.Max(0.1f, minWanderTime);
+        maxWanderTime = Mathf.Max(minWanderTime, maxWanderTime);
+        minWandererLifetime = Mathf.Max(1f, minWandererLifetime);
+        maxWandererLifetime = Mathf.Max(minWandererLifetime, maxWandererLifetime);
+        despawnDelay = Mathf.Max(0f, despawnDelay);
+    }
+}

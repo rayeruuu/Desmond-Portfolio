@@ -9,7 +9,7 @@ const CONFIG = {
 // Sample projects. Edit or add more.
 const PROJECTS = [
   {
-    title: "Lucid",
+    title: "Lucid Dreams",
     category: "Unity",
     description: "Atmospheric first-person puzzle prototype exploring light-bending mechanics and spatial memory.",
     longDescription: "Lucid Dreams plunges players into a surreal, dreamlike universe where the ordinary becomes bizarre and anything can turn hostile. Battle animated objects, explore unpredictable dreamscapes, and tackle physics-driven challenges in a world where each dream is a chaotic story of humor and surprises.",
@@ -35,9 +35,7 @@ const PROJECTS = [
       ],
       video: "https://drive.google.com/file/d/1NBcFozqHpP69vo9QmxafhTvC09O-81e6/preview"
     },
-    snippets: [
-      { title: "Interactable trigger", language: "csharp", code: "void HandleTrigger(Collider other) {\n    if(!other.CompareTag(\"Player\")) return;\n    portal.Enable();\n}" }
-    ]
+    snippets: []
   },
   {
     title: "MinaTamis",
@@ -66,7 +64,23 @@ const PROJECTS = [
       ],
       video: "https://drive.google.com/file/d/1FyTz4Chh6lSmGJ2TwW1z5zTHkbraOE50/preview"
     },
-    snippets: []
+    snippets: [
+      {
+        title: "AudioManager.cs",
+        language: "csharp",
+        path: "assets/scripts/unity/MinaTamis/AudioManager.txt"
+      },
+      {
+        title: "NPCSpawner.cs",
+        language: "csharp",
+        path: "assets/scripts/unity/MinaTamis/NPCSpawner.txt"
+      },
+      {
+        title: "ObjectInteractionHandler.cs",
+        language: "csharp",
+        path: "assets/scripts/unity/MinaTamis/ObjectInteractionHandler.txt"
+      }
+    ]
   },
   {
     title: "Bricks",
@@ -125,7 +139,13 @@ const PROJECTS = [
       ],
       video: "https://drive.google.com/file/d/1Au0cSsMGTSm7cQOTyQjkv_Q6Ui4Ib8kS/preview"
     },
-    snippets: []
+    snippets: [
+      {
+        title: "GameManager.cs",
+        language: "csharp",
+        path: "assets/scripts/unity/Isolation Protocol/GameManager.txt"
+      }
+    ]
   },
   {
     title: "Helicopter Animation",
@@ -475,12 +495,35 @@ function renderProjects() {
 
 function getPrimarySnippet(project) {
   if (!project) return null;
-  const list = Array.isArray(project.snippets) ? project.snippets : [];
+  const list = getSnippetList(project);
   return list.length ? list[0] : null;
 }
 
-async function showProjectCode(project) {
-  const snippet = getPrimarySnippet(project);
+function getSnippetList(project) {
+  return Array.isArray(project?.snippets)
+    ? project.snippets.filter(Boolean)
+    : [];
+}
+
+function getSnippetLabel(snippet, fallback = 'Code') {
+  const direct = snippet?.title?.trim();
+  if (direct) return direct;
+  const path = snippet?.path || '';
+  if (path) {
+    const segments = path.split(/[/\\]/);
+    const last = segments.pop()?.trim();
+    if (last) return last;
+  }
+  return fallback;
+}
+
+async function showProjectCode(project, snippetOverride = null) {
+  const snippet = snippetOverride || getPrimarySnippet(project);
+  if (!snippet) return;
+  await openSnippet(snippet);
+}
+
+async function openSnippet(snippet) {
   if (!snippet) return;
   try {
     await ensureSnippetLoaded(snippet);
@@ -702,7 +745,7 @@ function openProjectModal(index){
   const videoSlideIndex = video ? imgs.length : null;
 
   modalLinks.innerHTML = '';
-  const primarySnippet = getPrimarySnippet(currentProject);
+  const snippetList = getSnippetList(currentProject);
   // Show Demo (if available) and Code (if available) inside the modal
   if (currentProject.links?.demo && currentProject.links.demo !== '#') {
     const a = document.createElement('a');
@@ -727,13 +770,53 @@ function openProjectModal(index){
     });
     modalLinks.appendChild(videoBtn);
   }
-  if (primarySnippet) {
+  if (snippetList.length === 1) {
+    const snippet = snippetList[0];
     const codeBtn = document.createElement('button');
     codeBtn.type = 'button';
     codeBtn.className = 'btn btn-outline';
     codeBtn.textContent = 'Code';
-    codeBtn.addEventListener('click', () => showProjectCode(currentProject));
+    codeBtn.title = getSnippetLabel(snippet);
+    codeBtn.addEventListener('click', () => showProjectCode(currentProject, snippet));
     modalLinks.appendChild(codeBtn);
+  } else if (snippetList.length > 1) {
+    const dropdown = document.createElement('div');
+    dropdown.className = 'code-dropdown';
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'btn btn-outline code-dropdown__trigger';
+    trigger.textContent = 'Code';
+    trigger.setAttribute('aria-haspopup', 'true');
+    trigger.setAttribute('aria-expanded', 'false');
+    dropdown.appendChild(trigger);
+
+    const menu = document.createElement('div');
+    menu.className = 'code-dropdown__menu';
+    menu.setAttribute('role', 'menu');
+
+    snippetList.forEach((snippet, idx) => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'code-dropdown__item';
+      item.textContent = getSnippetLabel(snippet, `Snippet ${idx + 1}`);
+      item.setAttribute('role', 'menuitem');
+      item.addEventListener('click', () => {
+        showProjectCode(currentProject, snippet);
+      });
+      menu.appendChild(item);
+    });
+
+    dropdown.appendChild(menu);
+
+    const setExpanded = (state) => trigger.setAttribute('aria-expanded', state ? 'true' : 'false');
+    dropdown.addEventListener('mouseenter', () => setExpanded(true));
+    dropdown.addEventListener('mouseleave', () => setExpanded(false));
+    dropdown.addEventListener('focusin', () => setExpanded(true));
+    dropdown.addEventListener('focusout', (e) => {
+      if (!dropdown.contains(e.relatedTarget)) setExpanded(false);
+    });
+
+    modalLinks.appendChild(dropdown);
   }
   // Removed GitHub Code button to keep everything inline.
 

@@ -1,0 +1,252 @@
+using System.Collections;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using TMPro;
+using UnityEngine.InputSystem;
+
+public class GameManager : MonoBehaviour
+{
+    public static GameManager Instance;
+
+    [Header("Enemy Kill Tracker")]
+    private int enemiesKilled = 0;
+    public int targetKills = 10;
+    public TMP_Text enemyKillText;
+
+    [Header("Score Settings")]
+    private int score = 0;
+    public TMP_Text scoreText;
+
+    [Header("Door Settings")]
+    public DoorController doorController;
+
+    // Pause
+    public static bool IsPaused { get; private set; } = false;
+    [Header("Pause UI")]
+    public GameObject pausePanel;
+    public GameObject[] pauseUIElements;
+
+    // Game Over
+    [Header("Game Over UI")]
+    public GameObject gameOverPanel;
+    public GameObject[] gameOverUIElements;
+    public float delayBeforeMainMenu = 5f;
+    private bool gameOverTriggered = false;
+
+    // Objective
+    [Header("Objective UI")]
+    public TMP_Text objectiveText; // "Defeat 10 Enemies" & "Defeat Boss"
+    private bool hasDefeated10Enemies = false;
+    private bool hasDefeatedBoss = false;
+
+    // Game Win
+    [Header("Game Win UI")]
+    public GameObject winPanel;
+    public TMP_Text finalScoreText;
+    public GameObject[] winUIElements;
+    private bool gameWinTriggered = false;
+
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    void Start()
+    {
+        // Initialize kills & score
+        enemiesKilled = 0;
+        score = 0;
+        UpdateEnemyKillText();
+        UpdateScoreText();
+
+        // Hide panels at start
+        if (pausePanel) pausePanel.SetActive(false);
+        if (gameOverPanel) gameOverPanel.SetActive(false);
+        if (winPanel) winPanel.SetActive(false);
+
+        // Initialize objective text (both red at start)
+        UpdateObjectiveUI();
+    }
+
+    void Update()
+    {
+        // Toggle pause (Start button or Escape key)
+        if ((Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame) ||
+            (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame))
+        {
+            TogglePause();
+        }
+    }
+
+    // ----------------------
+    // ENEMY & SCORE LOGIC
+    // ----------------------
+    public void RegisterEnemyKill()
+    {
+        enemiesKilled++;
+        UpdateEnemyKillText();
+
+        // Check if we've reached 10 kills
+        if (!hasDefeated10Enemies && enemiesKilled >= targetKills)
+        {
+            hasDefeated10Enemies = true;
+            UpdateObjectiveUI();
+
+            // Optionally unlock door
+            if (doorController != null)
+            {
+                doorController.UnlockDoor();
+                Debug.Log("Target enemy kill count reached! Boss room unlocked!");
+            }
+        }
+    }
+
+    private void UpdateEnemyKillText()
+    {
+        if (enemyKillText != null)
+            enemyKillText.text = $"Enemies Killed: {enemiesKilled}/{targetKills}";
+    }
+
+    public void AddScore(int amount)
+    {
+        score += amount;
+        UpdateScoreText();
+    }
+
+    private void UpdateScoreText()
+    {
+        if (scoreText != null)
+            scoreText.text = "Score: " + score;
+    }
+
+    // ----------------------
+    // OBJECTIVE UI
+    // ----------------------
+    private void UpdateObjectiveUI()
+    {
+        if (objectiveText == null) return;
+
+        // Red if incomplete, green if complete
+        string color10Enemies = hasDefeated10Enemies ? "green" : "red";
+        string colorBoss      = hasDefeatedBoss       ? "green" : "red";
+
+        // Color-coded lines
+        objectiveText.text =
+            $"<color={color10Enemies}>Defeat 10 Enemies</color>\n" +
+            $"<color={colorBoss}>Defeat Boss</color>";
+    }
+
+    // ----------------------
+    // PAUSE LOGIC
+    // ----------------------
+    public void TogglePause()
+    {
+        if (IsPaused)
+        {
+            // Unpause
+            Time.timeScale = 1f;
+            IsPaused = false;
+            if (pausePanel) pausePanel.SetActive(false);
+
+            if (pauseUIElements != null)
+            {
+                foreach (GameObject ui in pauseUIElements)
+                {
+                    if (ui) ui.SetActive(true);
+                }
+            }
+            Debug.Log("Game Unpaused");
+        }
+        else
+        {
+            // Pause
+            Time.timeScale = 0f;
+            IsPaused = true;
+            if (pausePanel) pausePanel.SetActive(true);
+
+            if (pauseUIElements != null)
+            {
+                foreach (GameObject ui in pauseUIElements)
+                {
+                    if (ui) ui.SetActive(false);
+                }
+            }
+            Debug.Log("Game Paused");
+        }
+    }
+
+    // ----------------------
+    // GAME OVER
+    // ----------------------
+    public void TriggerGameOver()
+    {
+        if (gameOverTriggered) return;
+        gameOverTriggered = true;
+
+        if (gameOverUIElements != null)
+        {
+            foreach (GameObject ui in gameOverUIElements)
+            {
+                if (ui) ui.SetActive(false);
+            }
+        }
+
+        if (gameOverPanel)
+            gameOverPanel.SetActive(true);
+
+        Time.timeScale = 0f;
+        StartCoroutine(GameOverRoutine());
+    }
+
+    private IEnumerator GameOverRoutine()
+    {
+        yield return new WaitForSecondsRealtime(delayBeforeMainMenu);
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("Main Menu");
+    }
+
+    // ----------------------
+    // GAME WIN
+    // ----------------------
+    public void TriggerGameWin()
+    {
+        if (gameWinTriggered) return;
+        gameWinTriggered = true;
+
+        // Mark the "Defeat Boss" objective as complete
+        hasDefeatedBoss = true;
+        UpdateObjectiveUI();
+
+        if (winUIElements != null)
+        {
+            foreach (GameObject ui in winUIElements)
+            {
+                if (ui) ui.SetActive(false);
+            }
+        }
+
+        // Show final score on the win panel
+        if (finalScoreText != null)
+            finalScoreText.text = "Final Score: " + score;
+
+        if (winPanel)
+            winPanel.SetActive(true);
+
+        Time.timeScale = 0f;
+        StartCoroutine(GameWinRoutine());
+    }
+
+    private IEnumerator GameWinRoutine()
+    {
+        yield return new WaitForSecondsRealtime(delayBeforeMainMenu);
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("Main Menu");
+    }
+}
