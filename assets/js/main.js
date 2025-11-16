@@ -230,7 +230,7 @@ const PROJECTS = [
     ]
   },
   {
-    title: "Hollow Maze",
+    title: "Hollow Maze (Unfinished)",
     category: "Unity",
     description: "First-person horror maze prototype with basic enemy AI and tense atmosphere.",
     longDescription: "Hollow Maze is a mini horror game inspired by Pac-Man. Navigate randomized mazes to collect all the orbs while avoiding four aggressive ghosts. Players must strategize their movements or risk losing all lives in this tense, fast-paced arcade experience.",
