@@ -359,6 +359,34 @@ if (heroPhoto && CONFIG.photo) {
   heroPhoto.addEventListener('error', () => { heroPhoto.style.display = 'none'; });
 }
 
+// Mobile nav toggle
+const navToggle = document.querySelector('.nav-toggle');
+const navLinks = document.getElementById('navLinks');
+if (navToggle && navLinks) {
+  const closeMenu = () => {
+    navLinks.classList.remove('is-open');
+    navToggle.classList.remove('is-active');
+    navToggle.setAttribute('aria-expanded', 'false');
+  };
+
+  navToggle.addEventListener('click', () => {
+    const open = !navLinks.classList.contains('is-open');
+    if (open) {
+      navLinks.classList.add('is-open');
+      navToggle.classList.add('is-active');
+    } else {
+      navLinks.classList.remove('is-open');
+      navToggle.classList.remove('is-active');
+    }
+    navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+
+  navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 720) closeMenu();
+  });
+}
+
 // Email utilities
 const displayEmail = document.getElementById("displayEmail");
 const mailtoLink = document.getElementById("mailtoLink");

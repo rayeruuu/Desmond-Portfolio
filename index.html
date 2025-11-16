@@ -17,13 +17,18 @@
 </head>
 <body>
   <header class="site-header">
-    <nav class="nav">
+    <nav class="nav" aria-label="Primary navigation">
       <a class="brand" href="#top">&lt;DevPortfolio /&gt;</a>
-      <div class="spacer"></div>
-      <a href="#about" class="nav-link">About</a>
-      <a href="#projects" class="nav-link">Projects</a>
-      <a href="#resume" class="nav-link">Resume</a>
-      <a href="#contact" class="nav-link">Reach Me</a>
+      <button class="nav-toggle" type="button" aria-controls="navLinks" aria-expanded="false">
+        <span class="sr-only">Toggle navigation menu</span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+      </button>
+      <div class="nav-links" id="navLinks">
+        <a href="#about" class="nav-link">About</a>
+        <a href="#projects" class="nav-link">Projects</a>
+        <a href="#resume" class="nav-link">Resume</a>
+        <a href="#contact" class="nav-link">Reach Me</a>
+      </div>
     </nav>
   </header>
 
