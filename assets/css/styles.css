@@ -791,7 +791,7 @@ input:focus, textarea:focus, .btn:focus, .filter:focus { outline: 2px solid tran
 }
 
 .modal.is-mobile .modal-media {
-  min-height: clamp(280px, 65vh, 560px);
+  min-height: clamp(220px, 52vh, 440px);
   padding: 0;
   border: none;
   border-radius: 0;
@@ -814,11 +814,11 @@ input:focus, textarea:focus, .btn:focus, .filter:focus { outline: 2px solid tran
 .modal.is-mobile .carousel {
   border-radius: 0;
   border: none;
-  min-height: clamp(280px, 65vh, 560px);
+  min-height: clamp(220px, 52vh, 440px);
 }
 
 .modal.is-mobile .modal-side {
-  padding: 2rem 1rem 4.5rem;
+  padding: 1.65rem 1rem 3.5rem;
   gap: 1.3rem;
   background: radial-gradient(circle at top, rgba(0,229,255,0.08), rgba(4,6,12,0.95));
   margin-top: -0.75rem;
@@ -864,17 +864,13 @@ input:focus, textarea:focus, .btn:focus, .filter:focus { outline: 2px solid tran
 }
 
 .modal.is-mobile #modalLinks {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  margin: 1rem -1rem -3.5rem;
-  padding: 1rem 1.25rem;
-  background: linear-gradient(180deg, rgba(5,7,12,0.85), rgba(5,7,12,0.98));
-  border-radius: 24px 24px 0 0;
-  border: 1px solid rgba(255,255,255,0.06);
-  box-shadow: 0 -8px 24px rgba(0,0,0,0.65);
-  z-index: 5;
+  position: static;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 @keyframes modal-pop-in {
