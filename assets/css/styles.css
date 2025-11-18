@@ -690,6 +690,7 @@ input:focus, textarea:focus, .btn:focus, .filter:focus { outline: 2px solid tran
   width: 100vw;
   height: 100vh;
   max-height: none;
+  overflow-y: auto;
   border-radius: 0;
 }
 .modal.is-mobile .modal-content {
@@ -709,8 +710,8 @@ input:focus, textarea:focus, .btn:focus, .filter:focus { outline: 2px solid tran
   padding: 0.6rem 0.8rem 1.2rem;
 }
 .modal.is-mobile .modal-side {
-  padding: 1rem 1rem 2rem;
-  gap: 1rem;
+  padding: 1.25rem 1rem 2.5rem;
+  gap: 1.1rem;
   background: #0d121b;
 }
 .modal.is-mobile .modal-side .modal-section,
@@ -718,8 +719,9 @@ input:focus, textarea:focus, .btn:focus, .filter:focus { outline: 2px solid tran
 .modal.is-mobile #modalLinks {
   border: 1px solid var(--ring);
   border-radius: 16px;
-  padding: 0.85rem;
-  background: rgba(255,255,255,0.02);
+  padding: 0.95rem;
+  background: rgba(10,14,22,0.92);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
 }
 .modal.is-mobile .modal-side .modal-section h4 {
   font-size: 0.78rem;
@@ -734,6 +736,9 @@ input:focus, textarea:focus, .btn:focus, .filter:focus { outline: 2px solid tran
 }
 .modal.is-mobile .carousel {
   min-height: clamp(240px, 60vh, 540px);
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
 }
 .modal.is-mobile .carousel-meta {
   padding: 0 0.65rem;
