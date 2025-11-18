@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.min.css" />
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body>
@@ -159,6 +160,7 @@
           <ul class="chips">
               <li class="chip">Photoshop</li>
               <li class="chip">Illustrator</li>
+              <li class="chip">Lightroom</li>
           </ul>
         </article>
       </div>
@@ -195,8 +197,12 @@
 
     <section id="contact" class="section">
       <h2>Reach Me</h2>
-      <p>You can email or call me directly, or use the form.</p>
+      <p>I respond fastest on email or chat - pick what works best for you.</p>
       <div class="contact">
+        <div class="reach-status">
+          <span class="status-badge" id="reachStatusBadge" role="status">Available for internship / freelance</span>
+          <span class="status-note" id="reachStatusNote">Replies within 24 hours.</span>
+        </div>
         <div class="email-row">
           <span class="contact-icon" aria-hidden="true">📧</span>
           <code id="displayEmail">you@email.com</code>
@@ -217,31 +223,11 @@
             <img class="social-icon" src="assets/icons/github-svgrepo-com.svg" alt="GitHub" />
           </a>
         </div>
-        <form id="contactForm" class="form" autocomplete="on">
-          <div class="row">
-            <label>
-              Name
-              <input type="text" name="name" placeholder="Your name" required />
-            </label>
-            <label>
-              Email
-              <input type="email" name="email" placeholder="you@example.com" required />
-            </label>
-          </div>
-          <label>
-            Subject
-            <input type="text" name="subject" placeholder="Let's connect" />
-          </label>
-          <label>
-            Message
-            <textarea name="message" rows="5" placeholder="Tell me about your project..." required></textarea>
-          </label>
-          <div class="row">
-            <button type="submit" class="btn btn-primary">Send Email</button>
-            <a id="mailtoLink" class="btn btn-outline" href="mailto:you@email.com">Open Mail App</a>
-          </div>
-          
-        </form>
+        <div class="reach-cta">
+          <a class="btn btn-primary" id="emailLink" href="mailto:you@email.com">Send Email</a>
+          <a class="btn btn-outline" href="https://www.linkedin.com/in/desmond-nadela" target="_blank" rel="noopener">Connect on LinkedIn</a>
+          <a class="btn btn-outline" id="whatsAppLink" href="https://wa.me/639453191694" target="_blank" rel="noopener">Chat on WhatsApp</a>
+        </div>
       </div>
     </section>
   </main>
@@ -256,20 +242,28 @@
     <div class="modal-dialog" role="document">
       <button class="modal-close btn btn-ghost" aria-label="Close" data-close>✕</button>
       <div class="modal-content">
-        <div class="modal-header">
-          <h3 id="modalTitle">Project</h3>
-        </div>
-        <div class="modal-media">
-          <div class="carousel" aria-roledescription="carousel">
-            <div class="slides" id="carouselSlides"></div>
-            <div class="controls">
-              <button class="ctrl prev btn btn-outline" id="carouselPrev" aria-label="Previous">◀</button>
-              <button class="ctrl next btn btn-outline" id="carouselNext" aria-label="Next">▶</button>
-            </div>
+        <section class="modal-main">
+          <div class="modal-header">
+            <h3 id="modalTitle">Project</h3>
           </div>
-        </div>
+          <div class="modal-media">
+            <div class="carousel" aria-roledescription="carousel">
+              <div class="slides" id="carouselSlides"></div>
+              <div class="controls">
+                <button class="ctrl prev btn btn-outline" id="carouselPrev" aria-label="Previous">◀</button>
+                <button class="ctrl next btn btn-outline" id="carouselNext" aria-label="Next">▶</button>
+              </div>
+            </div>
+            <div class="carousel-meta">
+              <p id="carouselCounter" class="carousel-counter" aria-live="polite">01 / 01</p>
+              <div class="carousel-progress" aria-hidden="true">
+                <span id="carouselProgressBar"></span>
+              </div>
+            </div>
+            <div class="carousel-thumbs" id="carouselThumbs" aria-label="Slide thumbnails" role="tablist"></div>
+          </div>
+        </section>
         <aside class="modal-side">
-          <div id="modalLinks" class="card-links"></div>
           <section class="modal-section" id="modalLongSection">
             <h4>Description</h4>
             <p id="modalLongDesc"></p>
@@ -286,6 +280,7 @@
           </section>
 
           <div id="modalTechChips" class="chips"></div>
+          <div id="modalLinks" class="modal-actions"></div>
         </aside>
       </div>
     </div>
@@ -295,20 +290,28 @@
   <div id="codeOverlay" class="code-overlay" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="backdrop" data-code-close></div>
     <div class="dialog">
-      <header>
+      <header class="code-overlay__header">
         <div>
-          Full source
-          <span id="codeOverlayTitle"></span>
+          <p class="code-overlay__eyebrow">Full source</p>
+          <p id="codeOverlayTitle" class="code-overlay__title"></p>
+          <p id="codeOverlayMeta" class="code-overlay__meta"></p>
         </div>
         <button class="close" aria-label="Close code overlay" data-code-close>✕</button>
       </header>
-      <pre id="codeOverlayPre"><code id="codeOverlayContent"></code></pre>
+      <div class="code-overlay__nav" id="codeOverlayNav" hidden>
+        <div class="code-tabs" id="codeOverlayTabs" role="tablist" aria-label="Code files"></div>
+      </div>
+      <pre id="codeOverlayPre"><code id="codeOverlayContent" class="language-none"></code></pre>
       <iframe id="codeOverlayFrame" title="Code file" hidden></iframe>
     </div>
   </div>
 
   <!-- Privacy-friendly analytics (Plausible). Replace data-domain value with your domain (e.g., your-username.github.io). Remove if not using. -->
   <script defer data-domain="your-username.github.io" src="https://plausible.io/js/script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-csharp.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-javascript.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-markup.min.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </body>
 </html>

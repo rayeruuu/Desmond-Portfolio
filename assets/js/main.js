@@ -3,8 +3,74 @@ const CONFIG = {
   name: "Desmond",
   email: "ryelnadela@gmail.com",
   github: "rayeruu",
+  phone: "+639453191694",
+  whatsappNumber: "639453191694",
+  availability: "Available for internship / freelance",
+  responseTime: "Replies within 24 hours",
   photo: "assets/images/picture.png", // place your photo here
 };
+
+const RESPONSIVE_BREAKPOINTS = [480, 720, 960, 1280];
+const HOST_CAN_PROXY = (() => {
+  if (typeof window === 'undefined') return false;
+  if (!window.location.protocol.startsWith('http')) return false;
+  const host = window.location.hostname || '';
+  return host && host !== 'localhost' && host !== '127.0.0.1';
+})();
+const SITE_BASE_URL = typeof window !== 'undefined' ? window.location.href : '';
+const thumbPreloadCache = new Set();
+
+function buildResponsiveSrcset(src) {
+  if (!HOST_CAN_PROXY || !src) return '';
+  try {
+    const absolute = new URL(src, SITE_BASE_URL);
+    return RESPONSIVE_BREAKPOINTS.map((width) => {
+      const proxy = new URL('https://wsrv.nl/');
+      proxy.searchParams.set('url', absolute.href);
+      proxy.searchParams.set('w', String(width));
+      proxy.searchParams.set('output', 'webp');
+      proxy.searchParams.set('q', '70');
+      return `${proxy.href} ${width}w`;
+    }).join(', ');
+  } catch {
+    return '';
+  }
+}
+
+function applyResponsiveImageSources(img, src, options = {}) {
+  if (!img || !src) return;
+  const { immediate = false, sizes } = options;
+  const computedSizes = sizes || '(max-width: 720px) 90vw, (max-width: 1100px) 70vw, 640px';
+  const srcset = buildResponsiveSrcset(src);
+  if (immediate) {
+    img.src = src;
+    if (srcset) img.srcset = srcset;
+  } else {
+    img.dataset.src = src;
+    if (srcset) img.dataset.srcset = srcset;
+  }
+  if (srcset) img.sizes = computedSizes;
+}
+
+function queueThumbPreload(src) {
+  if (!src || thumbPreloadCache.has(src) || typeof Image !== 'function') return;
+  const preloader = new Image();
+  preloader.decoding = 'async';
+  preloader.src = src;
+  thumbPreloadCache.add(src);
+}
+
+function sanitizeDigits(value) {
+  return (value || '').replace(/[^0-9]/g, '');
+}
+
+function buildWhatsAppLink() {
+  const digits = sanitizeDigits(CONFIG.whatsappNumber || CONFIG.phone);
+  if (!digits) return '';
+  const base = `https://wa.me/${digits}`;
+  const text = encodeURIComponent('Hi Desmond! I found your portfolio and would love to connect.');
+  return `${base}?text=${text}`;
+}
 
 // Sample projects. Edit or add more.
 const PROJECTS = [
@@ -334,6 +400,70 @@ const PROJECTS = [
       ],
       video: null
     }
+  },
+  {
+    title: "Photoshop & Illustrator",
+    category: "Other",
+    description: "Brand identity explorations, poster layouts, and logo studies created in Adobe Photoshop and Illustrator.",
+    longDescription: "A curated collection of marketing assets ranging from esports posters to event branding. Each piece was composed from scratch—combining photo-bashing, typography hierarchies, and color grading—to deliver polished visuals ready for print and social media drops.",
+    contribution: "Sole designer – handled concept sketches, vector cleanup, final compositing, and export prep for both digital and print deliverables.",
+    featureList: [
+      "Custom logos and iconography polished in Illustrator",
+      "Poster layouts optimized for both vertical and square crops",
+      "Lighting and texture paint-overs completed in Photoshop",
+      "Print-ready exports with bleed and safe-area guides"
+    ],
+    techChips: ["Photoshop", "Illustrator", "Branding"],
+    tags: ["Other", "Graphic Design"],
+    links: { demo: "#", github: "#" },
+    image: "assets/images/projects/others/Photoshop & Illustrator/dynamic smash showdown.png",
+    media: {
+      images: [
+        "assets/images/projects/others/Photoshop & Illustrator/dynamic smash showdown.png",
+        "assets/images/projects/others/Photoshop & Illustrator/fiesta.png",
+        "assets/images/projects/others/Photoshop & Illustrator/Desmond D. Ryel.png",
+        "assets/images/projects/others/Photoshop & Illustrator/Screenshot 2024-01-17 133516.jpg",
+        "assets/images/projects/others/Photoshop & Illustrator/Screenshot 2024-02-27 183716.jpg",
+        "assets/images/projects/others/Photoshop & Illustrator/desmond 2.jpg",
+        "assets/images/projects/others/Photoshop & Illustrator/NADELA_BACKGROUND.png",
+        "assets/images/projects/others/Photoshop & Illustrator/sp3 new logo.png"
+      ],
+      video: null
+    }
+  },
+  {
+    title: "Photographs (Lightroom)",
+    category: "Other",
+    description: "Portrait and lifestyle photo set graded in Adobe Lightroom with cinematic tones.",
+    longDescription: "A quick-hit photography reel that captures candid campus life, moody night scenes, and street portraits. Every image was shot on a mirrorless camera, then balanced inside Lightroom with custom HSL curves, selective masking, and filmic grain for cohesive storytelling.",
+    contribution: "Solo shooter – planned the shots, handled on-location camera work, and completed the full Lightroom post-process.",
+    featureList: [
+      "Consistent filmic grade across multiple lighting conditions",
+      "Skin-tone retouching using local masks",
+      "Lens corrections and perspective cleanup",
+      "Export presets for social and print sets"
+    ],
+    techChips: ["Lightroom", "Photography"],
+    tags: ["Other", "Photography"],
+    links: { demo: "#", github: "#" },
+    image: "assets/images/projects/others/Photograps (Lightroom)/photo (1).jpg",
+    media: {
+      images: [
+        "assets/images/projects/others/Photograps (Lightroom)/photo (1).jpg",
+        "assets/images/projects/others/Photograps (Lightroom)/photo (2).jpg",
+        "assets/images/projects/others/Photograps (Lightroom)/photo (3).jpg",
+        "assets/images/projects/others/Photograps (Lightroom)/photo (4).jpg",
+        "assets/images/projects/others/Photograps (Lightroom)/photo (5).jpg",
+        "assets/images/projects/others/Photograps (Lightroom)/photo (6).jpg",
+        "assets/images/projects/others/Photograps (Lightroom)/photo (7).jpg",
+        "assets/images/projects/others/Photograps (Lightroom)/photo (8).jpg",
+        "assets/images/projects/others/Photograps (Lightroom)/photo (9).jpg",
+        "assets/images/projects/others/Photograps (Lightroom)/photo (10).jpg",
+        "assets/images/projects/others/Photograps (Lightroom)/photo (11).jpg",
+        "assets/images/projects/others/Photograps (Lightroom)/photo (12).jpg"
+      ],
+      video: null
+    }
   }
 ];
 
@@ -361,9 +491,27 @@ if (heroPhoto && CONFIG.photo) {
 
 // Email utilities
 const displayEmail = document.getElementById("displayEmail");
-const mailtoLink = document.getElementById("mailtoLink");
 if (displayEmail) displayEmail.textContent = CONFIG.email;
-if (mailtoLink) mailtoLink.href = `mailto:${CONFIG.email}`;
+const emailLinkCta = document.getElementById("emailLink");
+if (emailLinkCta) emailLinkCta.href = `mailto:${CONFIG.email}`;
+
+const displayPhoneEl = document.getElementById("displayPhone");
+if (displayPhoneEl && CONFIG.phone) displayPhoneEl.textContent = CONFIG.phone;
+
+const whatsAppLink = document.getElementById("whatsAppLink");
+const resolvedWhatsApp = buildWhatsAppLink();
+if (whatsAppLink) {
+  if (resolvedWhatsApp) {
+    whatsAppLink.href = resolvedWhatsApp;
+  } else {
+    whatsAppLink.remove();
+  }
+}
+
+const statusBadge = document.getElementById("reachStatusBadge");
+if (statusBadge && CONFIG.availability) statusBadge.textContent = CONFIG.availability;
+const statusNote = document.getElementById("reachStatusNote");
+if (statusNote && CONFIG.responseTime) statusNote.textContent = CONFIG.responseTime;
 
 const copyEmailBtn = document.getElementById("copyEmail");
 if (copyEmailBtn) {
@@ -375,22 +523,6 @@ if (copyEmailBtn) {
     } catch (e) {
       alert("Copy failed. Your email: " + CONFIG.email);
     }
-  });
-}
-
-// Contact form -> mailto
-const form = document.getElementById("contactForm");
-if (form) {
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const formData = new FormData(form);
-    const name = formData.get("name");
-    const email = formData.get("email");
-    const subject = formData.get("subject") || `Message from ${name}`;
-    const message = formData.get("message");
-    const body = encodeURIComponent(`From: ${name} <${email}>\n\n${message}`);
-    const mailto = `mailto:${CONFIG.email}?subject=${encodeURIComponent(subject)}&body=${body}`;
-    window.location.href = mailto;
   });
 }
 
@@ -444,8 +576,11 @@ function renderProjects() {
     const coverImage = p.image || (Array.isArray(p.media?.images) && p.media.images.length ? p.media.images[0] : null);
     if (coverImage) {
       const img = document.createElement("img");
-      img.src = coverImage; img.alt = `${p.title} cover`;
-      img.loading = "lazy"; img.decoding = "async";
+      img.alt = `${p.title} cover`;
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.fetchPriority = "low";
+      applyResponsiveImageSources(img, coverImage, { immediate: true, sizes: "(max-width: 720px) 100vw, 320px" });
       media.appendChild(img);
     } else {
       media.appendChild(createPlaceholder());
@@ -517,22 +652,20 @@ function getSnippetLabel(snippet, fallback = 'Code') {
   return fallback;
 }
 
-async function showProjectCode(project, snippetOverride = null) {
-  const snippet = snippetOverride || getPrimarySnippet(project);
-  if (!snippet) return;
-  await openSnippet(snippet);
-}
-
-async function openSnippet(snippet) {
-  if (!snippet) return;
-  try {
-    await ensureSnippetLoaded(snippet);
-  } catch (err) {
-    if (!snippet._loadedText) {
-      snippet._loadedText = `Unable to load snippet${snippet.path ? ` from ${snippet.path}` : ''}.`;
-    }
-  }
-  openCodeOverlay(snippet);
+function showProjectCode(project, snippetOverride = null) {
+  if (!project) return;
+  const snippetList = getSnippetList(project);
+  if (!snippetList.length) return;
+  const desiredIndex = snippetOverride ? snippetList.indexOf(snippetOverride) : 0;
+  codeOverlayState = {
+    projectTitle: project.title || 'Code',
+    snippets: snippetList,
+    activeIndex: desiredIndex >= 0 ? desiredIndex : 0
+  };
+  renderCodeTabs();
+  loadSnippetIntoOverlay(codeOverlayState.activeIndex)
+    .then(() => openCodeOverlayElement())
+    .catch(() => openCodeOverlayElement());
 }
 
 async function ensureSnippetLoaded(snippet) {
@@ -573,6 +706,8 @@ filterButtons.forEach(btn => {
     activeFilter = btn.dataset.filter;
     currentPage = 0; // reset to first page on filter change
     renderProjects();
+    recordMetric('filters', activeFilter || 'All');
+    track('Filter Apply', { filter: activeFilter || 'All' });
   });
 });
 
@@ -627,6 +762,49 @@ function track(event, props){
   }
 }
 
+const METRIC_STORAGE_KEY = 'portfolio_metrics_v1';
+
+function readAnalyticsStore(){
+  try {
+    const raw = localStorage.getItem(METRIC_STORAGE_KEY);
+    if (!raw) return { filters: {}, modals: {} };
+    const parsed = JSON.parse(raw);
+    return {
+      filters: parsed.filters || {},
+      modals: parsed.modals || {}
+    };
+  } catch {
+    return { filters: {}, modals: {} };
+  }
+}
+
+function writeAnalyticsStore(store){
+  try {
+    localStorage.setItem(METRIC_STORAGE_KEY, JSON.stringify(store));
+  } catch {}
+}
+
+function recordMetric(bucket, key){
+  if (!bucket || !key) return;
+  try {
+    const store = readAnalyticsStore();
+    if (!store[bucket]) store[bucket] = {};
+    store[bucket][key] = (store[bucket][key] || 0) + 1;
+    writeAnalyticsStore(store);
+  } catch {}
+}
+
+if (typeof window !== 'undefined') {
+  window.portfolioAnalytics = {
+    get: () => readAnalyticsStore(),
+    reset: () => localStorage.removeItem(METRIC_STORAGE_KEY),
+    top: (bucket, limit = 5) => {
+      const source = Object.entries(readAnalyticsStore()[bucket] || {});
+      return source.sort((a, b) => b[1] - a[1]).slice(0, limit);
+    }
+  };
+}
+
 // Track project link clicks
 document.addEventListener('click', (e) => {
   const a = e.target.closest('a');
@@ -663,6 +841,8 @@ document.addEventListener('click', (e) => {
 // ---------- Project Modal ----------
 let currentProject = null;
 let currentSlide = 0;
+let videoSlideLocked = false;
+let carouselThumbButtons = [];
 
 const modal = document.getElementById('projectModal');
 const slidesEl = document.getElementById('carouselSlides');
@@ -679,12 +859,58 @@ const modalContribution = document.getElementById('modalContribution');
 const modalFeaturesSection = document.getElementById('modalFeaturesSection');
 const modalFeatures = document.getElementById('modalFeatures');
 const modalTechChips = document.getElementById('modalTechChips');
+const carouselCounter = document.getElementById('carouselCounter');
+const carouselProgressBar = document.getElementById('carouselProgressBar');
+const carouselThumbs = document.getElementById('carouselThumbs');
 const codeOverlay = document.getElementById('codeOverlay');
 const codeOverlayPre = document.getElementById('codeOverlayPre');
 const codeOverlayContent = document.getElementById('codeOverlayContent');
 const codeOverlayFrame = document.getElementById('codeOverlayFrame');
 const codeOverlayTitle = document.getElementById('codeOverlayTitle');
+const codeOverlayMeta = document.getElementById('codeOverlayMeta');
+const codeOverlayNav = document.getElementById('codeOverlayNav');
+const codeOverlayTabs = document.getElementById('codeOverlayTabs');
 let activeCodeDropdown = null;
+let codeOverlayState = null;
+
+const carouselViewport = document.querySelector('#projectModal .carousel');
+const slideLazyObserver = (typeof window !== 'undefined' && 'IntersectionObserver' in window && carouselViewport)
+  ? new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          hydrateSlideMedia(entry.target);
+          slideLazyObserver.unobserve(entry.target);
+        }
+      });
+    }, { root: carouselViewport, threshold: 0.45 })
+  : null;
+
+function hydrateSlideMedia(slide) {
+  if (!slide) return;
+  slide.querySelectorAll('[data-src]').forEach((node) => {
+    node.src = node.dataset.src;
+    node.removeAttribute('data-src');
+  });
+  slide.querySelectorAll('[data-srcset]').forEach((node) => {
+    node.srcset = node.dataset.srcset;
+    node.removeAttribute('data-srcset');
+  });
+}
+
+function registerSlideForLazyMedia(slide, shouldPrime = false) {
+  if (!slide) return;
+  if (shouldPrime || !slideLazyObserver) {
+    hydrateSlideMedia(slide);
+    return;
+  }
+  slideLazyObserver.observe(slide);
+}
+
+function primeSlide(index) {
+  if (!slidesEl || typeof index !== 'number' || index < 0) return;
+  const slide = slidesEl.children[index];
+  if (slide) hydrateSlideMedia(slide);
+}
 
 function closeActiveCodeDropdown(target){
   const dropdown = target || activeCodeDropdown;
@@ -866,39 +1092,95 @@ function openProjectModal(index){
 
   // Build slides
   slidesEl.innerHTML = '';
+  if (carouselThumbs) carouselThumbs.innerHTML = '';
+  carouselThumbButtons = [];
   const slides = [];
+  const thumbButtonsLocal = [];
+  const registerThumb = (index, opts = {}) => {
+    if (!carouselThumbs) return;
+    if (opts.preview) queueThumbPreload(opts.preview);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'carousel-thumb';
+    if (opts.preview) {
+      const img = document.createElement('img');
+      img.src = opts.preview;
+      img.alt = '';
+      img.decoding = 'async';
+      img.loading = 'lazy';
+      btn.appendChild(img);
+    } else {
+      btn.classList.add('is-placeholder');
+    }
+    if (opts.isVideo) btn.classList.add('thumb-video');
+    btn.setAttribute('role', 'tab');
+    btn.setAttribute('aria-label', opts.label || `Slide ${index + 1}`);
+    btn.setAttribute('aria-selected', 'false');
+    btn.addEventListener('click', () => {
+      if (!currentProject) return;
+      stopAutoplay();
+      currentSlide = index;
+      updateCarousel();
+      startAutoplay();
+      track('Carousel Thumb', { title: currentProject.title, slide: index });
+    });
+    carouselThumbs.appendChild(btn);
+    thumbButtonsLocal[index] = btn;
+  };
   const useContain = currentProject.category === '2D';
+  const usePhotoFrame = currentProject.category === 'Other' && (currentProject.tags || []).includes('Photography');
+  imgs.slice(0, 4).forEach(queueThumbPreload);
   for (const src of imgs){
+    const slideIndex = slides.length;
     const s = document.createElement('div'); s.className = 'slide';
+    s.dataset.slideType = 'image';
     if (useContain) s.classList.add('slide-contain');
     const img = document.createElement('img');
-    img.src = src;
     img.alt = `${currentProject.title} image`;
-    img.loading = 'eager'; // modal slides render hidden first, so force eager loading for mobile reliability
+    img.loading = slideIndex === 0 ? 'eager' : 'lazy';
     img.decoding = 'async';
-    s.appendChild(img); slides.push(s);
+    img.fetchPriority = slideIndex === 0 ? 'high' : 'auto';
+    if (usePhotoFrame) img.classList.add('photo-frame');
+    applyResponsiveImageSources(img, src, { immediate: slideIndex <= 1, sizes: '(max-width: 900px) 90vw, 780px' });
+    if (!img.src) img.src = src; // fallback when responsive helper is a no-op
+    s.appendChild(img);
+    slides.push(s);
+    registerThumb(slideIndex, { preview: src, label: `${currentProject.title} image ${slideIndex + 1}` });
   }
   if (video){
+    const slideIndex = slides.length;
     const s = document.createElement('div'); s.className = 'slide';
+    s.dataset.slideType = 'video';
     if (useContain) s.classList.add('slide-contain');
     const iframe = document.createElement('iframe');
-    iframe.src = video;
+    iframe.dataset.src = video;
     iframe.title = currentProject.title + ' video';
     iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
     iframe.allowFullscreen = true;
+    iframe.loading = 'lazy';
     s.appendChild(iframe);
     slides.push(s);
+    const previewSrc = imgs[0] || currentProject.image || null;
+    registerThumb(slideIndex, { isVideo: true, label: `${currentProject.title} video`, preview: previewSrc });
   }
   if (slides.length === 0){
-    const s = document.createElement('div'); s.className = 'slide'; const ph = document.createElement('div'); ph.className='placeholder'; ph.style.width='100%'; ph.style.height='100%'; s.appendChild(ph); slides.push(s);
+    const s = document.createElement('div'); s.className = 'slide'; s.dataset.slideType = 'image';
+    const ph = document.createElement('div'); ph.className='placeholder'; ph.style.width='100%'; ph.style.height='100%';
+    s.appendChild(ph); slides.push(s);
   }
-  for (const s of slides) slidesEl.appendChild(s);
+  slides.forEach((slide, idx) => {
+    slidesEl.appendChild(slide);
+    const shouldPrime = slide.dataset.slideType !== 'video' && idx <= 1;
+    registerSlideForLazyMedia(slide, shouldPrime);
+  });
+  carouselThumbButtons = thumbButtonsLocal.filter(Boolean);
   currentSlide = 0; updateCarousel();
 
   // Show modal
   modal.setAttribute('aria-hidden','false');
   lockScroll();
   track('Project Details Open', { title: currentProject.title });
+  recordMetric('modals', currentProject.title);
   // Start autoplay after open
   startAutoplay();
 }
@@ -908,9 +1190,15 @@ function closeProjectModal(){
   modal.setAttribute('aria-hidden','true');
   unlockScroll();
   slidesEl.innerHTML='';
+  if (slideLazyObserver) slideLazyObserver.disconnect();
+  if (carouselThumbs) carouselThumbs.innerHTML = '';
+  if (carouselCounter) carouselCounter.textContent = '— —';
+  if (carouselProgressBar) carouselProgressBar.style.width = '0%';
+  carouselThumbButtons = [];
   currentProject = null; currentSlide = 0;
   closeActiveCodeDropdown();
   stopAutoplay();
+  setVideoSlideLock(false);
 }
 
 function updateCarousel(){
@@ -918,6 +1206,37 @@ function updateCarousel(){
   slidesEl.style.transform = `translateX(${-100*currentSlide}%)`;
   prevBtn.disabled = (currentSlide===0);
   nextBtn.disabled = (currentSlide>=count-1);
+  if (carouselCounter){
+    const pad = (n) => String(n).padStart(2,'0');
+    carouselCounter.textContent = count ? `${pad(currentSlide + 1)} / ${pad(count)}` : '00 / 00';
+  }
+  if (carouselProgressBar){
+    const progress = count <= 1 ? 1 : Math.min(1, currentSlide / (count - 1));
+    carouselProgressBar.style.width = `${progress * 100}%`;
+  }
+  if (carouselThumbButtons.length){
+    carouselThumbButtons.forEach((btn, idx) => {
+      if (!btn) return;
+      const isActive = idx === currentSlide;
+      btn.classList.toggle('is-active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+  }
+  primeSlide(currentSlide);
+  primeSlide(currentSlide + 1);
+  const current = slidesEl.children[currentSlide];
+  const containsVideo = current ? current.querySelector('video, iframe') : null;
+  setVideoSlideLock(Boolean(containsVideo));
+}
+
+function setVideoSlideLock(shouldLock){
+  if (videoSlideLocked === shouldLock) return;
+  videoSlideLocked = shouldLock;
+  if (shouldLock){
+    stopAutoplay();
+  } else {
+    startAutoplay();
+  }
 }
 
 function toYouTubeEmbed(url){
@@ -948,6 +1267,7 @@ let autoplayTimer = null;
 const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function startAutoplay(){
   if (prefersReduced) return; // respect user preference
+  if (videoSlideLocked) return; // keep carousel still while a video is in view
   stopAutoplay();
   const count = slidesEl?.children?.length || 0;
   if (!modal || modal.getAttribute('aria-hidden') === 'true' || count < 2) return;
@@ -983,28 +1303,108 @@ function playClickAnimation(card, e){
   }catch{}
 }
 
-function openCodeOverlay(sn){
+function openCodeOverlayElement(){
   if (!codeOverlay) return;
-  const title = sn?.title || sn?.path || 'Code';
-  codeOverlayTitle.textContent = title;
-  const inlineText = sn?._loadedText || sn?.code || null;
-  if (inlineText){
+  codeOverlay.setAttribute('aria-hidden','false');
+  lockScroll();
+}
+
+function renderCodeTabs(){
+  if (!codeOverlayTabs) return;
+  const snippetList = codeOverlayState?.snippets || [];
+  codeOverlayTabs.innerHTML = '';
+  if (!snippetList.length) {
+    if (codeOverlayNav) codeOverlayNav.hidden = true;
+    return;
+  }
+  if (codeOverlayNav) codeOverlayNav.hidden = snippetList.length <= 1;
+  snippetList.forEach((snippet, idx) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'code-tab';
+    if (idx === codeOverlayState.activeIndex) btn.classList.add('is-active');
+    btn.textContent = getSnippetLabel(snippet, `Snippet ${idx + 1}`);
+    btn.setAttribute('role', 'tab');
+    btn.setAttribute('aria-selected', idx === codeOverlayState.activeIndex ? 'true' : 'false');
+    btn.tabIndex = idx === codeOverlayState.activeIndex ? 0 : -1;
+    btn.addEventListener('click', () => {
+      selectCodeTab(idx).catch(() => {});
+    });
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const delta = e.key === 'ArrowRight' ? 1 : -1;
+        const total = snippetList.length;
+        if (!total) return;
+        const nextIndex = (idx + delta + total) % total;
+        selectCodeTab(nextIndex).catch(() => {});
+        const target = codeOverlayTabs.children[nextIndex];
+        if (target) target.focus();
+      }
+    });
+    codeOverlayTabs.appendChild(btn);
+  });
+}
+
+async function selectCodeTab(index){
+  if (!codeOverlayState) return;
+  const snippetList = codeOverlayState.snippets || [];
+  if (!snippetList[index]) return;
+  if (index === codeOverlayState.activeIndex) return;
+  codeOverlayState.activeIndex = index;
+  renderCodeTabs();
+  await loadSnippetIntoOverlay(index);
+}
+
+async function loadSnippetIntoOverlay(index){
+  const snippet = codeOverlayState?.snippets?.[index];
+  if (!snippet) return;
+  try {
+    await ensureSnippetLoaded(snippet);
+  } catch (err) {
+    if (!snippet._loadedText) {
+      snippet._loadedText = `Unable to load snippet${snippet.path ? ` from ${snippet.path}` : ''}.`;
+    }
+  }
+  renderSnippet(snippet);
+}
+
+function renderSnippet(snippet){
+  if (!snippet) return;
+  const inlineText = snippet._loadedText || snippet.code || null;
+  if (codeOverlayTitle) codeOverlayTitle.textContent = codeOverlayState?.projectTitle || (snippet.title || 'Code');
+  if (codeOverlayMeta) codeOverlayMeta.textContent = getSnippetLabel(snippet);
+  if (inlineText) {
     if (codeOverlayPre) codeOverlayPre.hidden = false;
-    if (codeOverlayFrame) codeOverlayFrame.hidden = true;
-    if (codeOverlayContent) codeOverlayContent.textContent = inlineText;
-  } else if (sn?.path){
+    if (codeOverlayFrame) {
+      codeOverlayFrame.hidden = true;
+      codeOverlayFrame.src = '';
+    }
+    if (codeOverlayContent) {
+      const lang = snippet.language ? `language-${snippet.language.toLowerCase()}` : 'language-none';
+      codeOverlayContent.className = lang;
+      codeOverlayContent.textContent = inlineText;
+      if (typeof Prism !== 'undefined' && Prism?.highlightElement) {
+        requestAnimationFrame(() => Prism.highlightElement(codeOverlayContent));
+      }
+    }
+  } else if (snippet.path) {
     if (codeOverlayPre) codeOverlayPre.hidden = true;
     if (codeOverlayFrame) {
       codeOverlayFrame.hidden = false;
-      codeOverlayFrame.src = sn.path;
+      codeOverlayFrame.src = snippet.path;
     }
   } else {
     if (codeOverlayPre) codeOverlayPre.hidden = false;
-    if (codeOverlayFrame) codeOverlayFrame.hidden = true;
-    if (codeOverlayContent) codeOverlayContent.textContent = 'No code provided.';
+    if (codeOverlayFrame) {
+      codeOverlayFrame.hidden = true;
+      codeOverlayFrame.src = '';
+    }
+    if (codeOverlayContent) {
+      codeOverlayContent.className = 'language-none';
+      codeOverlayContent.textContent = 'No code provided.';
+    }
   }
-  codeOverlay.setAttribute('aria-hidden','false');
-  lockScroll();
 }
 
 function closeCodeOverlay(){
@@ -1014,5 +1414,13 @@ function closeCodeOverlay(){
     codeOverlayFrame.src = '';
     codeOverlayFrame.hidden = true;
   }
+  if (codeOverlayContent) {
+    codeOverlayContent.textContent = '';
+    codeOverlayContent.className = 'language-none';
+  }
+  if (codeOverlayNav) codeOverlayNav.hidden = true;
+  if (codeOverlayTabs) codeOverlayTabs.innerHTML = '';
+  if (codeOverlayMeta) codeOverlayMeta.textContent = '';
+  codeOverlayState = null;
   unlockScroll();
 }
