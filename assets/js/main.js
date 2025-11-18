@@ -1,76 +1,3 @@
-function toggleMobileAccordion(enable){
-  accordionSections.forEach((sectionId) => {
-    const section = document.getElementById(sectionId);
-    if (!section) return;
-    if (enable) {
-      if (!accordionState.has(section)) {
-        const stored = {
-          element: section,
-          content: section.querySelector('.accordion__body-content') || wrapAccordionBody(section)
-        };
-        accordionState.set(section, stored);
-      }
-      toAccordion(section);
-    } else {
-      fromAccordion(section);
-    }
-  });
-}
-
-function wrapAccordionBody(section){
-  const body = document.createElement('div');
-  body.className = 'accordion__body-content';
-  while (section.firstChild) body.appendChild(section.firstChild);
-  section.appendChild(body);
-  return body;
-}
-
-function toAccordion(section){
-  if (section.classList.contains('accordion')) return;
-  section.classList.add('accordion');
-  const stored = accordionState.get(section) || {};
-  let headerBtn = section.querySelector('.accordion__header');
-  if (!headerBtn) {
-    headerBtn = document.createElement('button');
-    headerBtn.type = 'button';
-    headerBtn.className = 'accordion__header';
-    headerBtn.innerHTML = `<span>${section.querySelector('h4')?.textContent || 'Section'}</span><span class="accordion__chevron">›</span>`;
-    section.insertBefore(headerBtn, section.firstChild);
-  }
-  let body = section.querySelector('.accordion__body');
-  if (!body) {
-    body = document.createElement('div');
-    body.className = 'accordion__body has-padding';
-    const content = stored.content || section.querySelector('.accordion__body-content');
-    if (content) {
-      body.appendChild(content);
-    }
-    section.appendChild(body);
-  }
-  const chevron = headerBtn.querySelector('.accordion__chevron');
-  const setOpen = (open) => {
-    section.classList.toggle('is-open', open);
-    headerBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    if (body) body.style.maxHeight = open ? `${body.scrollHeight}px` : '0';
-  };
-  const isInitiallyOpen = section.id === 'modalLongSection';
-  setOpen(isInitiallyOpen);
-  headerBtn.addEventListener('click', () => {
-    const open = !section.classList.contains('is-open');
-    setOpen(open);
-  });
-}
-
-function fromAccordion(section){
-  if (!section.classList.contains('accordion')) return;
-  const headerBtn = section.querySelector('.accordion__header');
-  const body = section.querySelector('.accordion__body');
-  const content = body?.querySelector('.accordion__body-content');
-  if (headerBtn) headerBtn.remove();
-  if (content) section.appendChild(content);
-  if (body) body.remove();
-  section.classList.remove('accordion', 'is-open');
-}
 // ----- Config: personalize here -----
 const CONFIG = {
   name: "Desmond",
@@ -985,29 +912,6 @@ function primeSlide(index) {
   if (slide) hydrateSlideMedia(slide);
 }
 
-const mobileWidthQuery = window.matchMedia ? window.matchMedia('(max-width: 900px)') : null;
-const coarsePointerQuery = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
-const accordionSections = ['modalLongSection', 'modalContributionSection', 'modalFeaturesSection'];
-const accordionState = new Map();
-
-function shouldUseMobileModalLayout(){
-  const widthMatch = mobileWidthQuery ? mobileWidthQuery.matches : window.innerWidth <= 900;
-  const coarseMatch = coarsePointerQuery ? coarsePointerQuery.matches : false;
-  const shortViewport = window.innerHeight && window.innerHeight < 680;
-  return widthMatch || coarseMatch || shortViewport;
-}
-
-function syncModalLayoutClass(){
-  if (!modal) return;
-  modal.classList.toggle('is-mobile', shouldUseMobileModalLayout());
-  const enableAccordion = modal.classList.contains('is-mobile');
-  toggleMobileAccordion(enableAccordion);
-}
-
-if (mobileWidthQuery?.addEventListener) mobileWidthQuery.addEventListener('change', syncModalLayoutClass);
-if (coarsePointerQuery?.addEventListener) coarsePointerQuery.addEventListener('change', syncModalLayoutClass);
-window.addEventListener('resize', syncModalLayoutClass, { passive: true });
-
 function closeActiveCodeDropdown(target){
   const dropdown = target || activeCodeDropdown;
   if (!dropdown) return;
@@ -1033,7 +937,6 @@ function unlockScroll(){
 function openProjectModal(index){
   currentProject = PROJECTS[index];
   if (!currentProject || !modal) return;
-  syncModalLayoutClass();
   // Populate basic fields
   modalTitle.textContent = currentProject.title;
   // We no longer show the short card description or tags inside the modal body.
@@ -1285,8 +1188,6 @@ function openProjectModal(index){
 function closeProjectModal(){
   if (!modal) return;
   modal.setAttribute('aria-hidden','true');
-  modal.classList.remove('is-mobile');
-  toggleMobileAccordion(false);
   unlockScroll();
   slidesEl.innerHTML='';
   if (slideLazyObserver) slideLazyObserver.disconnect();
