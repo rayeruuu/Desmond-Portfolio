@@ -685,6 +685,63 @@ input:focus, textarea:focus, .btn:focus, .filter:focus { outline: 2px solid tran
 .modal-actions .btn { flex: 1 1 calc(50% - 0.5rem); min-width: 140px; justify-content: center; }
 .modal-actions .btn:nth-child(odd) { margin-right: 0; }
 
+.modal.is-mobile { padding: 0; align-items: flex-start; }
+.modal.is-mobile .modal-dialog {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  border-radius: 0;
+}
+.modal.is-mobile .modal-content {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto;
+  max-height: none;
+}
+.modal.is-mobile .modal-main {
+  border-right: none;
+  border-bottom: 1px solid var(--ring);
+}
+.modal.is-mobile .modal-header {
+  padding: 0.85rem 1rem 0.45rem;
+}
+.modal.is-mobile .modal-media {
+  min-height: clamp(240px, 55vh, 520px);
+  padding: 0.6rem 0.8rem 1.2rem;
+}
+.modal.is-mobile .modal-side {
+  padding: 1rem 1rem 2rem;
+  gap: 1rem;
+  background: #0d121b;
+}
+.modal.is-mobile .modal-side .modal-section,
+.modal.is-mobile #modalTechChips,
+.modal.is-mobile #modalLinks {
+  border: 1px solid var(--ring);
+  border-radius: 16px;
+  padding: 0.85rem;
+  background: rgba(255,255,255,0.02);
+}
+.modal.is-mobile .modal-side .modal-section h4 {
+  font-size: 0.78rem;
+  margin-bottom: 0.5rem;
+}
+.modal.is-mobile .modal-actions {
+  flex-direction: column;
+}
+.modal.is-mobile .modal-actions .btn,
+.modal.is-mobile .modal-actions .code-dropdown {
+  width: 100%;
+}
+.modal.is-mobile .carousel {
+  min-height: clamp(240px, 60vh, 540px);
+}
+.modal.is-mobile .carousel-meta {
+  padding: 0 0.65rem;
+}
+.modal.is-mobile .carousel-thumbs {
+  padding-inline: 0.35rem;
+}
+
 @keyframes modal-pop-in {
   from { transform: scale(0.96); opacity: 0; }
   to { transform: scale(1); opacity: 1; }

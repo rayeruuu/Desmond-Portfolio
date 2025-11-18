@@ -912,6 +912,25 @@ function primeSlide(index) {
   if (slide) hydrateSlideMedia(slide);
 }
 
+const mobileWidthQuery = window.matchMedia ? window.matchMedia('(max-width: 900px)') : null;
+const coarsePointerQuery = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
+
+function shouldUseMobileModalLayout(){
+  const widthMatch = mobileWidthQuery ? mobileWidthQuery.matches : window.innerWidth <= 900;
+  const coarseMatch = coarsePointerQuery ? coarsePointerQuery.matches : false;
+  const shortViewport = window.innerHeight && window.innerHeight < 680;
+  return widthMatch || coarseMatch || shortViewport;
+}
+
+function syncModalLayoutClass(){
+  if (!modal) return;
+  modal.classList.toggle('is-mobile', shouldUseMobileModalLayout());
+}
+
+if (mobileWidthQuery?.addEventListener) mobileWidthQuery.addEventListener('change', syncModalLayoutClass);
+if (coarsePointerQuery?.addEventListener) coarsePointerQuery.addEventListener('change', syncModalLayoutClass);
+window.addEventListener('resize', syncModalLayoutClass, { passive: true });
+
 function closeActiveCodeDropdown(target){
   const dropdown = target || activeCodeDropdown;
   if (!dropdown) return;
@@ -937,6 +956,7 @@ function unlockScroll(){
 function openProjectModal(index){
   currentProject = PROJECTS[index];
   if (!currentProject || !modal) return;
+  syncModalLayoutClass();
   // Populate basic fields
   modalTitle.textContent = currentProject.title;
   // We no longer show the short card description or tags inside the modal body.
@@ -1188,6 +1208,7 @@ function openProjectModal(index){
 function closeProjectModal(){
   if (!modal) return;
   modal.setAttribute('aria-hidden','true');
+  modal.classList.remove('is-mobile');
   unlockScroll();
   slidesEl.innerHTML='';
   if (slideLazyObserver) slideLazyObserver.disconnect();
