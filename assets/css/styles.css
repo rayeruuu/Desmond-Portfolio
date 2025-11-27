@@ -511,6 +511,49 @@ input:focus, textarea:focus, .btn:focus, .filter:focus { outline: 2px solid tran
   .modal-media { max-height: none; }
 }
 
+@media (max-width: 720px) {
+  .modal { padding: 0; align-items: flex-start; }
+  .modal-dialog {
+    width: 100vw;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+  }
+  .modal-content {
+    border-radius: 0;
+  }
+  .modal-header {
+    padding: 1rem 1.25rem 0.6rem;
+  }
+  .modal-body {
+    padding: 0.85rem 1.25rem 1.75rem;
+    gap: 1rem;
+  }
+  .modal-media {
+    padding: 0.4rem;
+    border-radius: 12px;
+  }
+  .carousel {
+    min-height: clamp(200px, 42vh, 360px);
+    border-radius: 12px;
+  }
+  .modal-media .carousel { border-radius: 12px; }
+  .carousel-thumb {
+    width: 48px;
+    height: 36px;
+  }
+  .controls {
+    padding: 0 0.25rem;
+  }
+  .controls .ctrl {
+    width: 32px;
+    height: 32px;
+  }
+  .modal.is-compact-carousel .carousel {
+    min-height: clamp(150px, 35vh, 280px);
+  }
+}
+
 /* Motion */
 @media (prefers-reduced-motion: no-preference){
   .card { transition: transform .2s ease, box-shadow .2s ease; }
