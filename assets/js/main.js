@@ -1129,6 +1129,8 @@ function openProjectModal(index){
   };
   const useContain = currentProject.category === '2D';
   const usePhotoFrame = currentProject.category === 'Other' && (currentProject.tags || []).includes('Photography');
+  const useCompactMedia = currentProject.title === 'Bricks';
+  modal.classList.toggle('is-compact-carousel', useCompactMedia);
   imgs.slice(0, 4).forEach(queueThumbPreload);
   for (const src of imgs){
     const slideIndex = slides.length;
@@ -1141,6 +1143,7 @@ function openProjectModal(index){
     img.decoding = 'async';
     img.fetchPriority = slideIndex === 0 ? 'high' : 'auto';
     if (usePhotoFrame) img.classList.add('photo-frame');
+    if (useCompactMedia) img.classList.add('slide-compact-media');
     applyResponsiveImageSources(img, src, { immediate: slideIndex <= 1, sizes: '(max-width: 900px) 90vw, 780px' });
     if (!img.src) img.src = src; // fallback when responsive helper is a no-op
     s.appendChild(img);
@@ -1188,6 +1191,7 @@ function openProjectModal(index){
 function closeProjectModal(){
   if (!modal) return;
   modal.setAttribute('aria-hidden','true');
+  modal.classList.remove('is-compact-carousel');
   unlockScroll();
   slidesEl.innerHTML='';
   if (slideLazyObserver) slideLazyObserver.disconnect();

@@ -258,11 +258,15 @@
     <div class="modal-dialog" role="document">
       <button class="modal-close btn btn-ghost" aria-label="Close" data-close>✕</button>
       <div class="modal-content">
-        <section class="modal-main">
-          <div class="modal-header">
+        <header class="modal-header">
+          <div>
+            <p class="modal-eyebrow">Project spotlight</p>
             <h3 id="modalTitle">Project</h3>
           </div>
-          <div class="modal-media">
+          <div id="modalTechChips" class="chips"></div>
+        </header>
+        <div class="modal-body">
+          <section class="modal-media">
             <div class="carousel" aria-roledescription="carousel">
               <div class="slides" id="carouselSlides"></div>
               <div class="controls">
@@ -270,34 +274,42 @@
                 <button class="ctrl next btn btn-outline" id="carouselNext" aria-label="Next">▶</button>
               </div>
             </div>
-            <div class="carousel-meta">
-              <p id="carouselCounter" class="carousel-counter" aria-live="polite">01 / 01</p>
-              <div class="carousel-progress" aria-hidden="true">
-                <span id="carouselProgressBar"></span>
+            <div class="modal-media-meta">
+              <div class="carousel-meta">
+                <p id="carouselCounter" class="carousel-counter" aria-live="polite">01 / 01</p>
+                <div class="carousel-progress" aria-hidden="true">
+                  <span id="carouselProgressBar"></span>
+                </div>
               </div>
+              <div class="carousel-thumbs" id="carouselThumbs" aria-label="Slide thumbnails" role="tablist"></div>
             </div>
-            <div class="carousel-thumbs" id="carouselThumbs" aria-label="Slide thumbnails" role="tablist"></div>
-          </div>
-        </section>
-        <aside class="modal-side">
-          <section class="modal-section" id="modalLongSection">
-            <h4>Description</h4>
-            <p id="modalLongDesc"></p>
           </section>
 
-          <section class="modal-section" id="modalContributionSection">
-            <h4>Contribution</h4>
-            <p id="modalContribution"></p>
-          </section>
-
-          <section class="modal-section" id="modalFeaturesSection">
-            <h4>Key Features</h4>
-            <ul id="modalFeatures"></ul>
-          </section>
-
-          <div id="modalTechChips" class="chips"></div>
           <div id="modalLinks" class="modal-actions"></div>
-        </aside>
+
+          <section class="modal-accordions">
+            <details class="modal-accordion" id="modalLongSection" open>
+              <summary>Description</summary>
+              <div class="modal-accordion__content">
+                <p id="modalLongDesc"></p>
+              </div>
+            </details>
+
+            <details class="modal-accordion" id="modalContributionSection" open>
+              <summary>Contribution</summary>
+              <div class="modal-accordion__content">
+                <p id="modalContribution"></p>
+              </div>
+            </details>
+
+            <details class="modal-accordion" id="modalFeaturesSection" open>
+              <summary>Key Features</summary>
+              <div class="modal-accordion__content">
+                <ul id="modalFeatures"></ul>
+              </div>
+            </details>
+          </section>
+        </div>
       </div>
     </div>
   </div>
