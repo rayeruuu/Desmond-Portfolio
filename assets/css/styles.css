@@ -335,8 +335,15 @@ h2 { font-size: clamp(1.5rem, 2vw + 1rem, 2rem); }
 .certificate-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
 .certificate-header h3 { margin: 0; }
 .eyebrow { text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.75rem; color: var(--muted); margin: 0 0 0.15rem; }
-.certificate-figure { margin: 0; border: 1px solid var(--ring); border-radius: 12px; overflow: hidden; background: #0f131a; }
-.certificate-figure img { width: 100%; display: block; object-fit: cover; }
+.certificate-figure { margin: 0; border: 1px solid var(--ring); border-radius: 12px; overflow: hidden; background: #0f131a; padding: 0.75rem; display: flex; justify-content: center; }
+.certificate-figure img {
+  width: 100%;
+  max-width: 480px;
+  max-height: 320px;
+  display: block;
+  object-fit: contain;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+}
 .certificate-card .btn-small { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
 
 @media (prefers-reduced-motion: no-preference) {
