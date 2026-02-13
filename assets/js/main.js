@@ -473,12 +473,17 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
 const snippetCache = new Map();
 
 // Personalize text
-const heroName = document.querySelector(".hero h1 span");
+const heroName = document.querySelector(".hero-name .gradient") || document.querySelector(".hero h1 span");
 const resolvedName = (CONFIG.name && CONFIG.name !== "Your Name")
   ? CONFIG.name
   : (heroName?.textContent?.trim() || "Your Name");
+const brandTextEl = document.querySelector(".brand-text");
 const brand = document.querySelector(".brand");
-if (brand) brand.textContent = `<${resolvedName.split(" ")[0]}'s Portfolio />`;
+if (brandTextEl) {
+  brandTextEl.textContent = resolvedName.split(" ")[0];
+} else if (brand) {
+  brand.textContent = `<${resolvedName.split(" ")[0]}'s Portfolio />`;
+}
 if (heroName) heroName.textContent = resolvedName;
 const githubLink = document.getElementById("githubLink");
 if (githubLink) githubLink.href = `https://github.com/${CONFIG.github}`;
@@ -625,6 +630,11 @@ function renderProjects() {
         paginationEl.appendChild(btn);
       }
     }
+  }
+
+  // Trigger anime.js re-entrance for newly rendered cards
+  if (typeof window._animeReanimateCards === 'function') {
+    requestAnimationFrame(() => window._animeReanimateCards());
   }
 }
 

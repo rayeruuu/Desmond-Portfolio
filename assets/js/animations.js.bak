@@ -1,0 +1,548 @@
+// ============================================================
+// Anime.js v4 – Portfolio Animations
+// Uses the UMD global `anime` from the CDN
+// ============================================================
+
+(function () {
+  'use strict';
+
+  // Guard: skip everything when the user prefers reduced motion
+  const prefersReducedMotion =
+    window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReducedMotion) return;
+
+  // Destructure helpers from the global anime object
+  const { animate, stagger, createTimeline, utils } = anime;
+
+  // ------------------------------------------------------------------
+  // Helper: run callback when element scrolls into view (once)
+  // ------------------------------------------------------------------
+  const scrollRevealQueue = [];
+
+  function onScrollReveal(selector, callback, options = {}) {
+    const threshold = options.threshold ?? 0.15;
+    const elements =
+      typeof selector === 'string'
+        ? Array.from(document.querySelectorAll(selector))
+        : Array.isArray(selector)
+          ? selector
+          : [selector];
+    if (!elements.length) return;
+
+    if (!('IntersectionObserver' in window)) {
+      // Fallback: fire immediately
+      elements.forEach((el) => callback(el));
+      return;
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            io.unobserve(entry.target);
+            callback(entry.target);
+          }
+        });
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold }
+    );
+    elements.forEach((el) => io.observe(el));
+    scrollRevealQueue.push(io);
+  }
+
+  // ------------------------------------------------------------------
+  // 1. Nav links – staggered fade + slide on load
+  // ------------------------------------------------------------------
+  function animateNav() {
+    const links = document.querySelectorAll('.nav-link');
+    if (!links.length) return;
+    animate(links, {
+      opacity: [0, 1],
+      translateY: ['-12px', '0px'],
+      delay: stagger(80, { start: 200 }),
+      duration: 600,
+      ease: 'out(3)',
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 2. Brand logo – bounce-in on load
+  // ------------------------------------------------------------------
+  function animateBrand() {
+    const brand = document.querySelector('.brand');
+    if (!brand) return;
+    animate(brand, {
+      opacity: [0, 1],
+      scale: [0.85, 1],
+      duration: 700,
+      ease: 'out(4)',
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 3. Hero section – cinematic timeline entrance
+  // ------------------------------------------------------------------
+  function animateHero() {
+    const hero = document.querySelector('.hero');
+    if (!hero) return;
+
+    const tl = createTimeline({ defaults: { ease: 'out(3)' } });
+
+    // Hero heading – word-by-word reveal
+    const heroH1 = hero.querySelector('h1');
+    if (heroH1) {
+      // Split text into words while preserving HTML tags as single tokens
+      const raw = heroH1.innerHTML;
+      // Tokenize: match full HTML tags (like <span ...>...</span>) OR individual words
+      const tokens = raw.match(/<[^>]+>.*?<\/[^>]+>|[^\s<]+/g) || [];
+      heroH1.innerHTML = tokens
+        .map((t) => `<span class="hero-word" style="display:inline-block; opacity:0">${t}&nbsp;</span>`)
+        .join('');
+
+      tl.add(heroH1.querySelectorAll('.hero-word'), {
+        opacity: [0, 1],
+        translateY: ['28px', '0px'],
+        delay: stagger(90),
+        duration: 700,
+      }, 100);
+    }
+
+    // Lead paragraph
+    const lead = hero.querySelector('.lead');
+    if (lead) {
+      tl.add(lead, {
+        opacity: [0, 1],
+        translateY: ['18px', '0px'],
+        duration: 600,
+      }, 400);
+    }
+
+    // CTA buttons
+    const ctaBtns = hero.querySelectorAll('.hero-cta .btn');
+    if (ctaBtns.length) {
+      tl.add(ctaBtns, {
+        opacity: [0, 1],
+        translateY: ['16px', '0px'],
+        scale: [0.92, 1],
+        delay: stagger(120),
+        duration: 600,
+      }, 550);
+    }
+
+    // Hero photo – scale + rotate spring
+    const heroPhoto = hero.querySelector('.hero-photo img');
+    if (heroPhoto) {
+      tl.add(heroPhoto, {
+        opacity: [0, 1],
+        scale: [0.7, 1],
+        rotate: ['-8deg', '0deg'],
+        duration: 900,
+        ease: 'out(4)',
+      }, 300);
+    }
+
+    // Orbs – gentle scale-in
+    const orbs = hero.querySelectorAll('.orb');
+    if (orbs.length) {
+      tl.add(orbs, {
+        opacity: [0, 0.45],
+        scale: [0.4, 1],
+        delay: stagger(150),
+        duration: 1200,
+        ease: 'out(2)',
+      }, 200);
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // 4. Section headings – scroll-triggered slide-up
+  // ------------------------------------------------------------------
+  function animateSectionHeadings() {
+    onScrollReveal('.section > h2', (el) => {
+      animate(el, {
+        opacity: [0, 1],
+        translateY: ['30px', '0px'],
+        duration: 700,
+        ease: 'out(3)',
+      });
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 5. About section paragraph + chips
+  // ------------------------------------------------------------------
+  function animateAbout() {
+    const aboutSection = document.getElementById('about');
+    if (!aboutSection) return;
+
+    onScrollReveal('#about > p', (el) => {
+      animate(el, {
+        opacity: [0, 1],
+        translateY: ['20px', '0px'],
+        duration: 700,
+        ease: 'out(3)',
+      });
+    });
+
+    onScrollReveal('#about .chips', (el) => {
+      const chips = el.querySelectorAll('.chip');
+      animate(chips, {
+        opacity: [0, 1],
+        scale: [0.6, 1],
+        delay: stagger(60),
+        duration: 500,
+        ease: 'out(3)',
+      });
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 6. Tech stack cards – staggered entrance on scroll
+  // ------------------------------------------------------------------
+  function animateStackCards() {
+    onScrollReveal('.stack-grid', (grid) => {
+      const cards = grid.querySelectorAll('.stack-item');
+      animate(cards, {
+        opacity: [0, 1],
+        translateY: ['40px', '0px'],
+        scale: [0.95, 1],
+        delay: stagger(100),
+        duration: 650,
+        ease: 'out(3)',
+      });
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 7. Skill meter dots – animated fill on scroll
+  // ------------------------------------------------------------------
+  function animateSkillDots() {
+    document.querySelectorAll('.meter.dots').forEach((meter) => {
+      onScrollReveal(meter, (el) => {
+        const dots = el.querySelectorAll('span:not(.off)');
+        if (!dots.length) return;
+        animate(dots, {
+          opacity: [0, 1],
+          scale: [0, 1],
+          delay: stagger(100),
+          duration: 400,
+          ease: 'out(3)',
+        });
+      });
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 8. Project cards – staggered entrance
+  // ------------------------------------------------------------------
+  function animateProjectCards() {
+    // Observe the grid container; animate children when visible
+    onScrollReveal('#projectsGrid', (grid) => {
+      const cards = grid.querySelectorAll('.card');
+      if (!cards.length) return;
+      animate(cards, {
+        opacity: [0, 1],
+        translateY: ['36px', '0px'],
+        scale: [0.96, 1],
+        delay: stagger(80),
+        duration: 600,
+        ease: 'out(3)',
+      });
+    });
+  }
+
+  // Re-animate cards when filter/page changes
+  function reanimateCards() {
+    const grid = document.getElementById('projectsGrid');
+    if (!grid) return;
+    const cards = grid.querySelectorAll('.card');
+    if (!cards.length) return;
+    animate(cards, {
+      opacity: [0, 1],
+      translateY: ['30px', '0px'],
+      scale: [0.96, 1],
+      delay: stagger(60),
+      duration: 500,
+      ease: 'out(3)',
+    });
+  }
+
+  // Expose globally so main.js can call after render
+  window._animeReanimateCards = reanimateCards;
+
+  // ------------------------------------------------------------------
+  // 9. Filter buttons – active state pulse
+  // ------------------------------------------------------------------
+  function animateFilters() {
+    const filters = document.querySelectorAll('.filter');
+    filters.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        animate(btn, {
+          scale: [1, 1.12, 1],
+          duration: 350,
+          ease: 'out(3)',
+        });
+      });
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 10. Resume section – entrance
+  // ------------------------------------------------------------------
+  function animateResume() {
+    onScrollReveal('.resume-grid', (grid) => {
+      const cards = grid.querySelectorAll('.resume-card');
+      animate(cards, {
+        opacity: [0, 1],
+        translateY: ['30px', '0px'],
+        delay: stagger(120),
+        duration: 600,
+        ease: 'out(3)',
+      });
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 11. Contact section – staggered reveal
+  // ------------------------------------------------------------------
+  function animateContact() {
+    const contact = document.querySelector('#contact .contact');
+    if (!contact) return;
+
+    onScrollReveal(contact, (el) => {
+      const children = el.children;
+      animate(children, {
+        opacity: [0, 1],
+        translateY: ['22px', '0px'],
+        delay: stagger(90),
+        duration: 600,
+        ease: 'out(3)',
+      });
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 12. Social links – pop-in
+  // ------------------------------------------------------------------
+  function animateSocials() {
+    onScrollReveal('.social-row', (row) => {
+      const links = row.querySelectorAll('.social-link');
+      animate(links, {
+        opacity: [0, 1],
+        scale: [0.5, 1],
+        rotate: ['-15deg', '0deg'],
+        delay: stagger(80),
+        duration: 500,
+        ease: 'out(4)',
+      });
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 13. Card hover – enhanced micro-interaction
+  // ------------------------------------------------------------------
+  function initCardHoverEffects() {
+    document.addEventListener('mouseenter', (e) => {
+      const card = e.target.closest?.('.card');
+      if (!card) return;
+      animate(card, {
+        translateY: '-4px',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
+        duration: 300,
+        ease: 'out(3)',
+      });
+    }, true);
+
+    document.addEventListener('mouseleave', (e) => {
+      const card = e.target.closest?.('.card');
+      if (!card) return;
+      animate(card, {
+        translateY: '0px',
+        boxShadow: '0 0px 0px rgba(0,0,0,0)',
+        duration: 400,
+        ease: 'out(2)',
+      });
+    }, true);
+  }
+
+  // ------------------------------------------------------------------
+  // 14. Modal open – enhanced pop-in
+  // ------------------------------------------------------------------
+  function enhanceModalAnimation() {
+    const modal = document.getElementById('projectModal');
+    if (!modal) return;
+
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.attributeName !== 'aria-hidden') continue;
+        const isOpen = modal.getAttribute('aria-hidden') === 'false';
+        if (!isOpen) continue;
+
+        const dialog = modal.querySelector('.modal-dialog');
+        if (dialog) {
+          animate(dialog, {
+            scale: [0.92, 1],
+            opacity: [0, 1],
+            duration: 350,
+            ease: 'out(3)',
+          });
+        }
+
+        // Stagger modal body content
+        const bodyChildren = modal.querySelectorAll('.modal-body > *');
+        if (bodyChildren.length) {
+          animate(bodyChildren, {
+            opacity: [0, 1],
+            translateY: ['16px', '0px'],
+            delay: stagger(60, { start: 150 }),
+            duration: 500,
+            ease: 'out(3)',
+          });
+        }
+      }
+    });
+
+    observer.observe(modal, { attributes: true, attributeFilter: ['aria-hidden'] });
+  }
+
+  // ------------------------------------------------------------------
+  // 15. Floating particles background (subtle)
+  // ------------------------------------------------------------------
+  function createParticleField() {
+    const hero = document.querySelector('.hero-art');
+    if (!hero) return;
+
+    const canvas = document.createElement('div');
+    canvas.className = 'particle-field';
+    canvas.setAttribute('aria-hidden', 'true');
+    hero.appendChild(canvas);
+
+    const count = 20;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.top = Math.random() * 100 + '%';
+      p.style.width = p.style.height = (Math.random() * 3 + 1) + 'px';
+      canvas.appendChild(p);
+    }
+
+    const particles = canvas.querySelectorAll('.particle');
+    animate(particles, {
+      translateX: () => [(Math.random() - 0.5) * 80 + 'px', (Math.random() - 0.5) * 80 + 'px'],
+      translateY: () => [(Math.random() - 0.5) * 60 + 'px', (Math.random() - 0.5) * 60 + 'px'],
+      opacity: [0, () => Math.random() * 0.5 + 0.2, 0],
+      delay: stagger(200, { from: 'center' }),
+      duration: () => Math.random() * 4000 + 4000,
+      loop: true,
+      ease: 'inOut(2)',
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 16. Pagination button clicks
+  // ------------------------------------------------------------------
+  function animatePagination() {
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest?.('.pagination button');
+      if (!btn) return;
+      animate(btn, {
+        scale: [1, 1.2, 1],
+        duration: 300,
+        ease: 'out(3)',
+      });
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 17. Smooth scroll to anchor with animation
+  // ------------------------------------------------------------------
+  function smoothScrollNav() {
+    document.querySelectorAll('a[href^="#"]').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        const target = document.querySelector(link.getAttribute('href'));
+        if (!target) return;
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 18. Gradient name shimmer effect
+  // ------------------------------------------------------------------
+  function animateGradientName() {
+    const gradient = document.querySelector('.hero h1 .gradient');
+    if (!gradient) return;
+    // Continuous subtle scale pulse
+    animate(gradient, {
+      scale: [1, 1.04, 1],
+      duration: 3000,
+      loop: true,
+      ease: 'inOut(2)',
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 19. Footer entrance
+  // ------------------------------------------------------------------
+  function animateFooter() {
+    onScrollReveal('.site-footer', (el) => {
+      animate(el, {
+        opacity: [0, 1],
+        translateY: ['20px', '0px'],
+        duration: 600,
+        ease: 'out(3)',
+      });
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 20. Emoji feedback bar – attention wiggle
+  // ------------------------------------------------------------------
+  function animateEmojiBar() {
+    onScrollReveal('.emoji-bar', (bar) => {
+      const emojis = bar.querySelectorAll('.emoji');
+      animate(emojis, {
+        scale: [0, 1],
+        rotate: ['-20deg', '0deg'],
+        delay: stagger(80),
+        duration: 500,
+        ease: 'out(4)',
+      });
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // Boot all animations
+  // ------------------------------------------------------------------
+  function init() {
+    animateBrand();
+    animateNav();
+    animateHero();
+    smoothScrollNav();
+    animateSectionHeadings();
+    animateAbout();
+    animateStackCards();
+    animateSkillDots();
+    animateProjectCards();
+    animateFilters();
+    animateResume();
+    animateContact();
+    animateSocials();
+    initCardHoverEffects();
+    enhanceModalAnimation();
+    createParticleField();
+    animatePagination();
+    animateGradientName();
+    animateFooter();
+    animateEmojiBar();
+  }
+
+  // Wait for DOM
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
