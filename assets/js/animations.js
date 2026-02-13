@@ -399,14 +399,55 @@
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   // ==================================================================
-  // LOADER — hide once page is ready
+  // INTRO — counter + text reveal, then explode into site
   // ==================================================================
-  const loader = document.getElementById('loader');
-  if (loader) {
-    window.addEventListener('load', () => {
-      setTimeout(() => loader.classList.add('is-hidden'), 300);
-      setTimeout(() => loader.remove(), 900);
+  const intro     = document.getElementById('intro');
+  const introPct  = document.getElementById('introPct');
+  const introLine = intro?.querySelector('.intro-line');
+  const introLabel = intro?.querySelector('.intro-label');
+  const introName = intro?.querySelector('.intro-name');
+
+  if (intro && introPct) {
+    document.body.classList.add('intro-active');
+
+    // Animate the percentage counter 0 → 100
+    const counter = { val: 0 };
+    animate(counter, {
+      val: [0, 100],
+      duration: 2400,
+      ease: 'inOutExpo',
+      onUpdate: () => {
+        introPct.textContent = Math.round(counter.val);
+      },
+      onComplete: () => {
+        // After counter finishes, reveal name then dismiss
+        setTimeout(() => {
+          intro.classList.add('is-done');
+          document.body.classList.remove('intro-active');
+
+          // Animate site elements in
+          animate('main, .site-header, .scroll-progress, #shaderBg, .bg-canvas, .cursor-glow', {
+            opacity: [0, 1],
+            duration: 800,
+            ease: 'outExpo',
+            delay: 100,
+          });
+        }, 600);
+      }
     });
+
+    // Trigger line + labels with slight delays
+    setTimeout(() => { introLine?.classList.add('is-active'); }, 100);
+    setTimeout(() => { introLabel?.classList.add('is-visible'); }, 400);
+    setTimeout(() => { introName?.classList.add('is-visible'); }, 800);
+
+    // Safety: remove intro after 5s no matter what
+    setTimeout(() => {
+      if (!intro.classList.contains('is-done')) {
+        intro.classList.add('is-done');
+        document.body.classList.remove('intro-active');
+      }
+    }, 5000);
   }
 
   // ==================================================================
