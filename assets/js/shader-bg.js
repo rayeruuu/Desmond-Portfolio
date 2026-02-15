@@ -1,6 +1,5 @@
 // ================================================================
-// Three.js Water-Plane Shader Background
-// Replicates ShaderGradient "waterPlane" – dramatic silk folds
+// Three.js Water-Plane Shader + Optional 3D Model Background
 // ================================================================
 
 import * as THREE from 'three';
@@ -8,7 +7,17 @@ import * as THREE from 'three';
 (function () {
   'use strict';
 
-  // ---- Config (matches user's ShaderGradient props) ----
+  const container = document.getElementById('shaderBg');
+  if (!container) return;
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const lowEndDevice = Boolean(
+    prefersReducedMotion ||
+    window.innerWidth < 768 ||
+    ((navigator.hardwareConcurrency || 8) <= 4) ||
+    ((navigator.deviceMemory || 8) <= 4)
+  );
+
   const CFG = {
     color1: '#2a5ad4',
     color2: '#000000',
@@ -16,7 +25,6 @@ import * as THREE from 'three';
     uSpeed: 0.1,
     uStrength: 4.5,
     uDensity: 1.0,
-    uFrequency: 0.0,
     uAmplitude: 5.2,
     brightness: 0.55,
     fov: 40,
@@ -215,15 +223,12 @@ import * as THREE from 'three';
   /* =========================================================
      Scene Setup
      ========================================================= */
-  const container = document.getElementById('shaderBg');
-  if (!container) return;
-
   const renderer = new THREE.WebGLRenderer({
-    antialias: true,
+    antialias: !lowEndDevice,
     alpha: false,
     powerPreference: 'high-performance',
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, lowEndDevice ? 1 : 1.6));
   renderer.setClearColor(new THREE.Color('#0a0e1a'));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -231,6 +236,7 @@ import * as THREE from 'three';
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#0a0e1a');
+  scene.fog = new THREE.FogExp2('#0a0e1a', lowEndDevice ? 0.14 : 0.09);
 
   // Camera
   const camera = new THREE.PerspectiveCamera(
@@ -247,10 +253,11 @@ import * as THREE from 'three';
     CFG.cDistance * Math.cos(polarRad),
     CFG.cDistance * Math.sin(polarRad) * Math.cos(azimuthRad)
   );
+  const baseCameraPos = camera.position.clone();
   camera.lookAt(0, 0, 0);
 
-  // Large plane with high subdivision for smooth folds
-  const geometry = new THREE.PlaneGeometry(14, 14, 300, 300);
+  // Large plane with adaptive subdivision
+  const geometry = new THREE.PlaneGeometry(14, 14, lowEndDevice ? 140 : 300, lowEndDevice ? 140 : 300);
 
   const material = new THREE.ShaderMaterial({
     uniforms: {
@@ -274,27 +281,79 @@ import * as THREE from 'three';
   mesh.rotation.x = THREE.MathUtils.degToRad(CFG.rotationX);
   mesh.rotation.y = THREE.MathUtils.degToRad(CFG.rotationY);
   mesh.rotation.z = THREE.MathUtils.degToRad(CFG.rotationZ);
+  mesh.renderOrder = 1;
   scene.add(mesh);
+
+  // Lights for model + shader blend
+  const hemi = new THREE.HemisphereLight(0xb9c8ff, 0x0a0e1a, lowEndDevice ? 0.28 : 0.38);
+  scene.add(hemi);
+  const keyLight = new THREE.DirectionalLight(0xffffff, lowEndDevice ? 0.45 : 0.6);
+  keyLight.position.set(2.5, 3.2, 2.0);
+  scene.add(keyLight);
+  const rimLight = new THREE.DirectionalLight(0x7aa2ff, lowEndDevice ? 0.18 : 0.26);
+  rimLight.position.set(-2.8, 1.6, -2.4);
+  scene.add(rimLight);
+
+  // Parallax + scroll state
+  const parallaxTarget = new THREE.Vector2(0, 0);
+  const parallaxCurrent = new THREE.Vector2(0, 0);
+
+  if (!prefersReducedMotion) {
+    window.addEventListener('mousemove', (e) => {
+      const nx = (e.clientX / window.innerWidth) * 2 - 1;
+      const ny = (e.clientY / window.innerHeight) * 2 - 1;
+      parallaxTarget.set(nx, ny);
+    }, { passive: true });
+
+  }
 
   /* =========================================================
      Render Loop
      ========================================================= */
   let animId;
   const clock = new THREE.Clock();
+  let running = false;
+
+  function renderFrame(elapsed) {
+    material.uniforms.uTime.value = elapsed;
+
+    if (!prefersReducedMotion) {
+      parallaxCurrent.lerp(parallaxTarget, 0.04);
+      camera.position.x = baseCameraPos.x + parallaxCurrent.x * 0.18;
+      camera.position.y = baseCameraPos.y - parallaxCurrent.y * 0.12;
+      camera.lookAt(0, 0, 0);
+
+      const t = elapsed;
+      mesh.rotation.z = THREE.MathUtils.degToRad(CFG.rotationZ) + Math.sin(t * 0.08) * 0.04;
+    }
+
+    renderer.render(scene, camera);
+  }
 
   function tick() {
+    if (!running) return;
     animId = requestAnimationFrame(tick);
-    material.uniforms.uTime.value = clock.getElapsedTime();
-    renderer.render(scene, camera);
+    renderFrame(clock.getElapsedTime());
+  }
+
+  function start() {
+    if (running) return;
+    running = true;
+    clock.start();
+    tick();
+  }
+
+  function stop() {
+    running = false;
+    cancelAnimationFrame(animId);
   }
 
   // Pause when tab hidden
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      cancelAnimationFrame(animId);
+      stop();
     } else {
-      clock.start();
-      tick();
+      start();
     }
   });
 
@@ -314,11 +373,10 @@ import * as THREE from 'three';
 
   // Reduced motion
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    material.uniforms.uTime.value = 2;
-    renderer.render(scene, camera);
+    renderFrame(2);
     return;
   }
 
-  tick();
-  console.log('[shader-bg] Water plane initialized');
+  start();
+  console.log(`[shader-bg] Initialized (${lowEndDevice ? 'fallback' : 'full'} mode)`);
 })();

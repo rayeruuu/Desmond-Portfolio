@@ -567,7 +567,7 @@ function renderProjects() {
     const open = () => openProjectModal(projectIndex);
     card.addEventListener('click', (e) => {
       // Don't open when clicking interactive links inside
-      if (e.target.closest('a')) return;
+      if (e.target.closest('a, button')) return;
       playClickAnimation(card, e);
       // slight delay to let the animation register visually
       setTimeout(open, 120);
@@ -590,6 +590,39 @@ function renderProjects() {
     } else {
       media.appendChild(createPlaceholder());
     }
+
+    const quickActions = document.createElement('div');
+    quickActions.className = 'card-quick-actions';
+
+    const viewBtn = document.createElement('button');
+    viewBtn.type = 'button';
+    viewBtn.className = 'card-quick-btn';
+    viewBtn.setAttribute('data-tip', 'Open details');
+    viewBtn.innerHTML = '<span class="card-quick-icon" aria-hidden="true">◉</span><span class="card-quick-text">View</span>';
+    viewBtn.setAttribute('aria-label', `View details for ${p.title}`);
+    viewBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      open();
+    });
+
+    quickActions.appendChild(viewBtn);
+
+    const primarySnippet = getPrimarySnippet(p);
+    if (primarySnippet) {
+      const codeBtn = document.createElement('button');
+      codeBtn.type = 'button';
+      codeBtn.className = 'card-quick-btn card-quick-btn--ghost';
+      codeBtn.setAttribute('data-tip', 'Open code');
+      codeBtn.innerHTML = '<span class="card-quick-icon" aria-hidden="true">&lt;/&gt;</span><span class="card-quick-text">Code</span>';
+      codeBtn.setAttribute('aria-label', `Open code for ${p.title}`);
+      codeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showProjectCode(p, primarySnippet);
+      });
+      quickActions.appendChild(codeBtn);
+    }
+
+    media.appendChild(quickActions);
 
     const body = document.createElement("div");
     body.className = "card-body";
