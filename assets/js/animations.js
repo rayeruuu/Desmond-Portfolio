@@ -253,6 +253,11 @@
       opacity: [0, 1], translateY: ['10px', '0px'],
       duration: 500, ease: 'outExpo', delay: 900
     });
+
+    // Animate stats bars filling
+    if (typeof window._animateStatsBars === 'function') {
+      window._animateStatsBars();
+    }
   }
 
   // Expose menu entrance for screen navigation
@@ -476,5 +481,97 @@
       });
     });
   });
+
+  // ================================================================
+  //  FLOATING PARTICLES — ambient dust/ember on menu & screens
+  // ================================================================
+  (function initParticles() {
+    const canvas = document.getElementById('particleCanvas');
+    if (!canvas) return;
+    const ctx2d = canvas.getContext('2d');
+    if (!ctx2d) return;
+
+    const PARTICLE_COUNT = 40;
+    const particles = [];
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function createParticle() {
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: -Math.random() * 0.4 - 0.1,
+        size: Math.random() * 1.8 + 0.4,
+        alpha: Math.random() * 0.35 + 0.05,
+        life: 0,
+        maxLife: Math.random() * 600 + 300,
+      };
+    }
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const p = createParticle();
+      p.life = Math.random() * p.maxLife; // stagger initial positions
+      particles.push(p);
+    }
+
+    function drawParticles() {
+      ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life++;
+
+        // Fade in then fade out
+        const progress = p.life / p.maxLife;
+        let alpha = p.alpha;
+        if (progress < 0.1) alpha *= progress / 0.1;
+        else if (progress > 0.8) alpha *= (1 - progress) / 0.2;
+
+        if (p.life >= p.maxLife || p.y < -10 || p.x < -10 || p.x > canvas.width + 10) {
+          particles[i] = createParticle();
+          particles[i].y = canvas.height + 5;
+          continue;
+        }
+
+        ctx2d.beginPath();
+        ctx2d.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx2d.fillStyle = `rgba(0, 229, 255, ${alpha})`;
+        ctx2d.fill();
+      }
+      requestAnimationFrame(drawParticles);
+    }
+    drawParticles();
+  })();
+
+  // ================================================================
+  //  ANIMATED STATS BARS — fill on menu entrance
+  // ================================================================
+  (function initStatsBars() {
+    const bars = document.querySelectorAll('.bf-stat-row__bar span');
+    if (!bars.length) return;
+
+    // Store target widths, set to 0 initially
+    const targets = [];
+    bars.forEach(bar => {
+      targets.push(bar.style.width || '0%');
+      bar.style.width = '0%';
+    });
+
+    // Expose function to animate bars
+    window._animateStatsBars = function () {
+      bars.forEach((bar, i) => {
+        setTimeout(() => {
+          bar.style.width = targets[i];
+        }, 600 + i * 120);
+      });
+    };
+  })();
 
 })();

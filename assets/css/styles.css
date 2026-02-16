@@ -85,6 +85,115 @@ code { font-family: var(--mono); font-size: .85em; }
 }
 body:hover .cursor-glow { opacity: 1; }
 
+/* ---------- Glitch Transition Overlay ---------- */
+.glitch-overlay {
+  position: fixed; inset: 0; z-index: 9990;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  background: #08090d;
+  mix-blend-mode: normal;
+}
+.glitch-overlay.is-active {
+  opacity: 1;
+  visibility: visible;
+  animation: glitchFlash .35s steps(4) forwards;
+}
+@keyframes glitchFlash {
+  0%   { opacity: 0; background: rgba(0,229,255,.08); }
+  15%  { opacity: 1; background: rgba(8,9,13,.7);
+         clip-path: inset(30% 0 40% 0); }
+  30%  { opacity: .6; background: rgba(178,69,255,.06);
+         clip-path: inset(60% 0 10% 0); }
+  45%  { opacity: .9; background: rgba(8,9,13,.5);
+         clip-path: inset(5% 0 80% 0); }
+  60%  { opacity: .3; background: rgba(0,229,255,.04);
+         clip-path: inset(45% 0 30% 0); }
+  80%  { opacity: .15; clip-path: none; }
+  100% { opacity: 0; visibility: hidden; clip-path: none; }
+}
+
+/* ---------- Floating Particles ---------- */
+.particle-canvas {
+  position: fixed; inset: 0; z-index: 2;
+  pointer-events: none;
+  opacity: .6;
+}
+body.intro-active .particle-canvas,
+body.title-active .particle-canvas {
+  opacity: 0;
+}
+
+/* ---------- HUD Corner Brackets ---------- */
+.game-screen::before,
+.game-screen::after {
+  content: '';
+  position: fixed;
+  width: 28px; height: 28px;
+  z-index: 100;
+  pointer-events: none;
+  opacity: .15;
+  transition: opacity .4s;
+}
+.game-screen.active::before,
+.game-screen.active::after { opacity: .15; }
+
+.game-screen::before {
+  top: 12px; left: 12px;
+  border-top: 1.5px solid var(--primary-a);
+  border-left: 1.5px solid var(--primary-a);
+}
+.game-screen::after {
+  top: 12px; right: 12px;
+  border-top: 1.5px solid var(--primary-a);
+  border-right: 1.5px solid var(--primary-a);
+}
+/* Bottom brackets via the hud-bar pseudo */
+.hud-bar::before,
+.hud-bar::after {
+  content: '';
+  position: fixed;
+  width: 28px; height: 28px;
+  z-index: 100;
+  pointer-events: none;
+  opacity: .15;
+}
+.hud-bar::before {
+  bottom: 12px; left: 12px;
+  border-bottom: 1.5px solid var(--primary-a);
+  border-left: 1.5px solid var(--primary-a);
+}
+.hud-bar::after {
+  bottom: 12px; right: 12px;
+  border-bottom: 1.5px solid var(--primary-a);
+  border-right: 1.5px solid var(--primary-a);
+}
+
+/* ---------- Visited Section Indicators ---------- */
+.bf-subnav-item {
+  position: relative;
+}
+.bf-subnav-item .visited-dot {
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--primary-a);
+  margin-left: 6px;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity .3s, transform .3s var(--ease-spring);
+  vertical-align: middle;
+}
+.bf-subnav-item.is-visited .visited-dot {
+  opacity: .7;
+  transform: scale(1);
+}
+
+/* ---------- Animated Stats Bars ---------- */
+.bf-stat-row__bar span {
+  transition: width 1s var(--ease-out);
+}
+
 /* ---------- Skip Link ---------- */
 .skip-link {
   position: fixed; top: -100%; left: 50%; transform: translateX(-50%);

@@ -1414,6 +1414,20 @@ function navigateToScreen(screenId) {
   const next = document.getElementById(screenId);
   if (!next) return;
 
+  // Trigger glitch overlay
+  const glitch = document.getElementById('glitchOverlay');
+  if (glitch) {
+    glitch.classList.remove('is-active');
+    void glitch.offsetWidth;
+    glitch.classList.add('is-active');
+    glitch.addEventListener('animationend', () => {
+      glitch.classList.remove('is-active');
+    }, { once: true });
+  }
+
+  // Mark section as visited
+  markVisited(screenId);
+
   // Hide old screen instantly
   if (prev) prev.classList.remove('active');
 
@@ -1441,6 +1455,27 @@ function navigateToScreen(screenId) {
 
   track('Screen Navigate', { screen: screenId });
 }
+
+// ---- Visited section tracking ----
+const visitedScreens = new Set();
+function markVisited(screenId) {
+  if (visitedScreens.has(screenId)) return;
+  visitedScreens.add(screenId);
+  // Find corresponding sub-nav button and add indicator
+  document.querySelectorAll('.bf-subnav-item[data-screen]').forEach(btn => {
+    if (btn.dataset.screen === screenId) {
+      btn.classList.add('is-visited');
+    }
+  });
+}
+
+// Add visited-dot elements to sub-nav buttons
+document.querySelectorAll('.bf-subnav-item[data-screen]').forEach(btn => {
+  const dot = document.createElement('span');
+  dot.className = 'visited-dot';
+  dot.setAttribute('aria-hidden', 'true');
+  btn.appendChild(dot);
+});
 
 // Wire up menu items
 document.querySelectorAll('.menu-item[data-screen]').forEach(btn => {
