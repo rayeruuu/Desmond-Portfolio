@@ -36,265 +36,352 @@
     </div>
   </div>
 
-  <!-- Skip to content (a11y) -->
-  <a href="#top" class="skip-link">Skip to content</a>
-
-  <!-- Scroll progress bar -->
-  <div class="scroll-progress" aria-hidden="true"><div class="scroll-progress__bar" id="scrollProgressBar"></div></div>
+  <!-- Skip to content -->
+  <a href="#screenMenu" class="skip-link">Skip to content</a>
 
   <!-- Three.js shader background -->
   <div id="shaderBg" aria-hidden="true"></div>
 
-  <!-- Animated background overlay -->
-  <div class="bg-canvas" aria-hidden="true">
-    <div class="bg-grid"></div>
-  </div>
+  <!-- Animated background grid -->
+  <div class="bg-canvas" aria-hidden="true"><div class="bg-grid"></div></div>
 
   <!-- Cursor glow -->
   <div id="cursorGlow" class="cursor-glow" aria-hidden="true"></div>
 
-  <header class="site-header" id="siteHeader">
-    <nav class="nav" aria-label="Primary navigation">
-      <a class="brand" href="#top">
-        <span class="brand-icon">&lt;/&gt;</span>
-        <span class="brand-text">Desmond</span>
-      </a>
-      <div class="nav-links" id="navLinks">
-        <a href="#about" class="nav-link" data-nav>About</a>
-        <a href="#projects" class="nav-link" data-nav>Projects</a>
-        <a href="#stack" class="nav-link" data-nav>Skills</a>
-        <a href="#resume" class="nav-link" data-nav>Resume</a>
-        <a href="#contact" class="nav-link" data-nav>Contact</a>
+  <!-- ================================================================
+       GAME SCREENS
+       ================================================================ -->
+
+  <!-- ============ MAIN MENU ============ -->
+  <div class="game-screen active" id="screenMenu">
+    <div class="screen-body menu-layout">
+      <div class="menu-left">
+        <div class="menu-brand">
+          <p class="menu-eyebrow">GAME DEV PORTFOLIO</p>
+          <h1 class="menu-title">DESMOND<br><span class="menu-title-sub">NADELA</span></h1>
+          <p class="menu-role">Game Developer &amp; Creative Technologist</p>
+        </div>
+        <nav class="menu-nav" aria-label="Main menu">
+          <button class="menu-item" data-screen="screenProjects" type="button">
+            <span class="menu-num">01</span>
+            <span class="menu-label">PROJECTS</span>
+            <svg class="menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
+          </button>
+          <button class="menu-item" data-screen="screenAbout" type="button">
+            <span class="menu-num">02</span>
+            <span class="menu-label">ABOUT</span>
+            <svg class="menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
+          </button>
+          <button class="menu-item" data-screen="screenSkills" type="button">
+            <span class="menu-num">03</span>
+            <span class="menu-label">SKILLS</span>
+            <svg class="menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
+          </button>
+          <button class="menu-item" data-screen="screenResume" type="button">
+            <span class="menu-num">04</span>
+            <span class="menu-label">RESUME</span>
+            <svg class="menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
+          </button>
+          <button class="menu-item" data-screen="screenContact" type="button">
+            <span class="menu-num">05</span>
+            <span class="menu-label">CONTACT</span>
+            <svg class="menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
+          </button>
+        </nav>
       </div>
-      <button class="hamburger" id="hamburger" aria-label="Toggle navigation" aria-expanded="false">
-        <span></span><span></span><span></span>
+      <div class="menu-right">
+        <div class="menu-photo-wrap">
+          <div class="menu-photo-ring"></div>
+          <div class="menu-photo-ring menu-photo-ring--2"></div>
+          <img id="heroPhoto" class="menu-photo" src="assets/images/picture.png" alt="Desmond" />
+          <div class="menu-photo-glow" aria-hidden="true"></div>
+        </div>
+        <div class="menu-stats">
+          <div class="stat"><span class="stat-num" data-count="15">0</span><span class="stat-label">Projects</span></div>
+          <div class="stat-divider"></div>
+          <div class="stat"><span class="stat-num" data-count="5">0</span><span class="stat-label">Unity Games</span></div>
+          <div class="stat-divider"></div>
+          <div class="stat"><span class="stat-num" data-count="6">0</span><span class="stat-label">3D Models</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="hud-bar">
+      <div class="hud-left">
+        <span class="hud-hint"><kbd>&uarr;</kbd><kbd>&darr;</kbd> Navigate</span>
+        <span class="hud-hint"><kbd>Enter</kbd> Select</span>
+      </div>
+      <div class="hud-right">
+        <div class="hud-social">
+          <a href="https://www.facebook.com/mondsssss/" target="_blank" rel="noopener" aria-label="Facebook"><img class="social-icon" src="assets/icons/facebook-svgrepo-com.svg" alt="Facebook" /></a>
+          <a href="https://www.linkedin.com/in/desmond-nadela" target="_blank" rel="noopener" aria-label="LinkedIn"><img class="social-icon" src="assets/icons/linkedin-svgrepo-com.svg" alt="LinkedIn" /></a>
+          <a href="https://github.com/rayeruuu" target="_blank" rel="noopener" aria-label="GitHub"><img class="social-icon" src="assets/icons/github-svgrepo-com.svg" alt="GitHub" /></a>
+        </div>
+        <span class="hud-copy">&copy; <span id="year"></span> Desmond Nadela</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PROJECTS (War Stories) ============ -->
+  <div class="game-screen" id="screenProjects">
+    <div class="screen-header">
+      <button class="screen-back-btn" data-screen="screenMenu" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        BACK
       </button>
-      <div class="nav-indicator" id="navIndicator"></div>
-    </nav>
-  </header>
+      <div class="screen-title-wrap">
+        <span class="screen-eyebrow">DESMOND NADELA</span>
+        <h2 class="screen-title">PROJECTS</h2>
+      </div>
+      <div class="screen-filters" id="projectFilters" role="tablist" aria-label="Project category filters">
+        <button class="filter is-active" data-filter="All" role="tab" aria-selected="true">ALL</button>
+        <button class="filter" data-filter="Unity" role="tab">UNITY</button>
+        <button class="filter" data-filter="3D" role="tab">3D</button>
+        <button class="filter" data-filter="2D" role="tab">2D</button>
+        <button class="filter" data-filter="Other" role="tab">OTHER</button>
+      </div>
+    </div>
+    <div class="war-cards-viewport">
+      <div class="war-cards" id="warCards" aria-live="polite"></div>
+    </div>
+    <div class="hud-bar">
+      <div class="hud-left">
+        <span class="hud-hint"><kbd>&larr;</kbd><kbd>&rarr;</kbd> Navigate</span>
+        <span class="hud-hint"><kbd>Enter</kbd> Select</span>
+        <span class="hud-hint"><kbd>Esc</kbd> Back</span>
+      </div>
+      <div class="hud-right">
+        <span class="hud-counter" id="warCardCounter">01 / 13</span>
+      </div>
+    </div>
+  </div>
 
-  <main id="top">
-
-    <!-- HERO -->
-    <section class="hero" id="hero">
-      <div class="hero-content">
-        <div class="hero-grid">
-          <div class="hero-copy">
-            <p class="hero-tag anim-init">Game Developer &amp; Creative Technologist</p>
-            <h1 class="hero-title">
-              <span class="hero-line anim-init">Hi, I'm</span>
-              <span class="hero-line hero-name anim-init"><span class="gradient">Desmond</span></span>
-            </h1>
-            <p class="hero-desc anim-init">I build interactive experiences &mdash; <strong>Unity</strong> games, <strong>3D</strong>/<strong>2D</strong> visuals, and creative tech explorations.</p>
-            <div class="hero-cta anim-init">
-              <a href="#projects" class="btn btn-glow"><span class="btn-text">View Projects</span><span class="btn-shine" aria-hidden="true"></span></a>
-              <a href="#contact" class="btn btn-glass">Reach Me</a>
-            </div>
-            <div class="hero-stats anim-init">
-              <div class="stat"><span class="stat-num" data-count="15">0</span><span class="stat-label">Projects</span></div>
-              <div class="stat-divider"></div>
-              <div class="stat"><span class="stat-num" data-count="5">0</span><span class="stat-label">Unity Games</span></div>
-              <div class="stat-divider"></div>
-              <div class="stat"><span class="stat-num" data-count="6">0</span><span class="stat-label">3D Models</span></div>
-            </div>
-          </div>
-          <div class="hero-visual">
-            <div class="hero-photo-wrap anim-init">
-              <div class="hero-photo-ring"></div>
-              <div class="hero-photo-ring hero-photo-ring--2"></div>
-              <img id="heroPhoto" class="hero-photo-img" src="assets/images/picture.png" alt="Desmond" />
-              <div class="hero-photo-glow" aria-hidden="true"></div>
-            </div>
-          </div>
+  <!-- ============ ABOUT ============ -->
+  <div class="game-screen" id="screenAbout">
+    <div class="screen-header">
+      <button class="screen-back-btn" data-screen="screenMenu" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        BACK
+      </button>
+      <div class="screen-title-wrap">
+        <span class="screen-eyebrow">DESMOND NADELA</span>
+        <h2 class="screen-title">ABOUT ME</h2>
+      </div>
+    </div>
+    <div class="screen-body panel-layout">
+      <div class="panel-main">
+        <p>I am a highly motivated Game Developer and BS Information Technology student specializing in Animation and Game Development. I possess a strong foundation in C#, C++, and Unity, with proven experience in creating robust AI &amp; Gameplay systems and intuitive User Interfaces.</p>
+        <p>My project portfolio, including titles like MinaTamis and Lucid, showcases my ability to transition seamlessly between roles like Co-Programmer and Lead Developer. I am eager to secure an internship to leverage my technical programming, 3D modeling, and strong organizational skills in a professional game development environment.</p>
+      </div>
+      <div class="panel-side">
+        <h3>CORE SKILLS</h3>
+        <div class="skill-tags">
+          <span class="skill-tag">Unity</span>
+          <span class="skill-tag">C#</span>
+          <span class="skill-tag">C++</span>
+          <span class="skill-tag">Maya</span>
+          <span class="skill-tag">Photoshop</span>
+          <span class="skill-tag">Illustrator</span>
+          <span class="skill-tag">After Effects</span>
+          <span class="skill-tag">Premiere Pro</span>
         </div>
       </div>
-      <div class="hero-shapes" aria-hidden="true">
-        <div class="shape shape--triangle"></div>
-        <div class="shape shape--circle"></div>
-        <div class="shape shape--square"></div>
-        <div class="shape shape--dot shape--dot-1"></div>
-        <div class="shape shape--dot shape--dot-2"></div>
-        <div class="shape shape--dot shape--dot-3"></div>
+    </div>
+    <div class="hud-bar">
+      <div class="hud-left">
+        <span class="hud-hint"><kbd>Esc</kbd> Back</span>
       </div>
-    </section>
+      <div class="hud-right"></div>
+    </div>
+  </div>
 
-    <!-- ABOUT -->
-    <section id="about" class="section">
-      <div class="section-label anim-init"><span class="section-num">01</span><span class="section-line"></span><span>About</span></div>
-      <div class="about-grid">
-        <div class="about-text">
-          <h2 class="anim-init">About Me</h2>
-          <p class="anim-init">I am a highly motivated Game Developer and BS Information Technology student specializing in Animation and Game Development. I possess a strong foundation in C#, C++, and Unity, with proven experience in creating robust AI &amp; Gameplay systems and intuitive User Interfaces.</p>
-          <p class="anim-init">My project portfolio, including titles like MinaTamis and Lucid, showcases my ability to transition seamlessly between roles like Co-Programmer and Lead Developer. I am eager to secure an internship to leverage my technical programming, 3D modeling, and strong organizational skills in a professional game development environment.</p>
-        </div>
-        <div class="about-skills">
-          <h3 class="anim-init">Core Skills</h3>
-          <ul class="skill-tags anim-init">
-            <li class="skill-tag">Unity</li>
-            <li class="skill-tag">C#</li>
-            <li class="skill-tag">C++</li>
-            <li class="skill-tag">Maya</li>
-            <li class="skill-tag">Photoshop</li>
-            <li class="skill-tag">Illustrator</li>
-            <li class="skill-tag">After Effects</li>
-            <li class="skill-tag">Premiere Pro</li>
-          </ul>
-        </div>
+  <!-- ============ SKILLS ============ -->
+  <div class="game-screen" id="screenSkills">
+    <div class="screen-header">
+      <button class="screen-back-btn" data-screen="screenMenu" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        BACK
+      </button>
+      <div class="screen-title-wrap">
+        <span class="screen-eyebrow">DESMOND NADELA</span>
+        <h2 class="screen-title">TECH STACK</h2>
       </div>
-    </section>
-
-    <!-- PROJECTS -->
-    <section id="projects" class="section">
-      <div class="section-label anim-init"><span class="section-num">02</span><span class="section-line"></span><span>Work</span></div>
-      <div class="section-head">
-        <h2 class="anim-init">Projects</h2>
-        <div class="filters anim-init" role="tablist" aria-label="Project category filters">
-          <button class="filter is-active" data-filter="All" role="tab" aria-selected="true">All</button>
-          <button class="filter" data-filter="Unity" role="tab">Unity</button>
-          <button class="filter" data-filter="3D" role="tab">3D</button>
-          <button class="filter" data-filter="2D" role="tab">2D</button>
-          <button class="filter" data-filter="Other" role="tab">Other</button>
-        </div>
-      </div>
-      <div id="projectsGrid" class="grid-cards" aria-live="polite"></div>
-      <div id="projectsPagination" class="pagination" aria-label="Project pages"></div>
-      <div id="projectFeedback" class="feedback anim-init" aria-label="Project feedback">
-        <div class="feedback-row">
-          <span class="muted">Was this helpful?</span>
-          <div class="emoji-bar" role="group" aria-label="Emoji reactions">
-            <button class="emoji" data-reaction="up">&#x1F44D;</button>
-            <button class="emoji" data-reaction="love">&#x1F60D;</button>
-            <button class="emoji" data-reaction="think">&#x1F914;</button>
-            <button class="emoji" data-reaction="down">&#x1F44E;</button>
-          </div>
-          <span id="feedbackThanks" class="muted" hidden>Thanks for the feedback!</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- TECH STACK -->
-    <section id="stack" class="section">
-      <div class="section-label anim-init"><span class="section-num">03</span><span class="section-line"></span><span>Expertise</span></div>
-      <h2 class="anim-init">Tech Stack</h2>
-      <p class="lead anim-init">Focused depth in a few core areas. Levels reflect production readiness, not just familiarity.</p>
-      <div class="stack-grid">
-        <article class="stack-item anim-init">
-          <div class="stack-icon">&#x2328;&#xFE0F;</div>
+    </div>
+    <div class="screen-body">
+      <p class="screen-lead">Focused depth in a few core areas. Levels reflect production readiness, not just familiarity.</p>
+      <div class="loadout-grid">
+        <article class="loadout-card">
+          <div class="loadout-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
           <header><h3>Programming</h3><span class="level-badge">Strong</span></header>
           <p>General-purpose programming for gameplay, tools, and scripting.</p>
           <div class="meter dots" data-level="4"></div>
           <ul class="chips"><li class="chip">C#</li><li class="chip">C++</li><li class="chip">Python</li><li class="chip">JavaScript</li><li class="chip">HTML</li><li class="chip">CSS</li><li class="chip">Java</li><li class="chip">PHP</li></ul>
         </article>
-        <article class="stack-item anim-init">
-          <div class="stack-icon">&#x1F3AE;</div>
+        <article class="loadout-card">
+          <div class="loadout-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="18" y2="12"/></svg></div>
           <header><h3>Unity / C#</h3><span class="level-badge level-badge--top">Advanced</span></header>
           <p>Gameplay systems, editor tooling, profiling, and build pipelines.</p>
           <div class="meter dots" data-level="5"></div>
           <ul class="chips"><li class="chip">UI</li><li class="chip">Coroutines</li><li class="chip">Lighting</li><li class="chip">Scenes</li><li class="chip">Version Control</li></ul>
         </article>
-        <article class="stack-item anim-init">
-          <div class="stack-icon">&#x1F3AC;</div>
+        <article class="loadout-card">
+          <div class="loadout-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
           <header><h3>Video Editing</h3><span class="level-badge">Strong</span></header>
           <p>Color grading, motion graphics, and storytelling for trailers and devlogs.</p>
           <div class="meter dots" data-level="4"></div>
           <ul class="chips"><li class="chip">Premiere Pro</li><li class="chip">After Effects</li><li class="chip">DaVinci Resolve</li><li class="chip">CapCut</li></ul>
         </article>
-        <article class="stack-item anim-init">
-          <div class="stack-icon">&#x1F3D7;&#xFE0F;</div>
+        <article class="loadout-card">
+          <div class="loadout-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
           <header><h3>Maya</h3><span class="level-badge level-badge--mid">Intermediate</span></header>
           <p>Low-poly modeling, UVs, basic rigging, and clean export pipelines.</p>
           <div class="meter dots" data-level="3"></div>
           <ul class="chips"><li class="chip">Modeling</li><li class="chip">UV/Texture</li><li class="chip">Bake</li><li class="chip">Animation</li></ul>
         </article>
-        <article class="stack-item anim-init">
-          <div class="stack-icon">&#x1F3A8;</div>
+        <article class="loadout-card">
+          <div class="loadout-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></div>
           <header><h3>Adobe Creative</h3><span class="level-badge level-badge--top">Advanced</span></header>
           <p>Raster art, vector branding, UI mockups, and promotional graphics.</p>
           <div class="meter dots" data-level="5"></div>
           <ul class="chips"><li class="chip">Photoshop</li><li class="chip">Illustrator</li><li class="chip">Lightroom</li></ul>
         </article>
       </div>
-    </section>
-
-    <!-- RESUME -->
-    <section id="resume" class="section">
-      <div class="section-label anim-init"><span class="section-num">04</span><span class="section-line"></span><span>Credentials</span></div>
-      <h2 class="anim-init">Resume</h2>
-      <p class="lead anim-init">Download my resume or view my latest certification.</p>
-      <div class="resume-grid">
-        <article class="resume-card glass-card anim-init">
-          <div class="resume-card-icon">&#x1F4C4;</div>
-          <h3>My Resume</h3>
-          <p class="muted">Full CV with experience, education, and skills.</p>
-          <div class="row">
-            <a class="btn btn-glow" href="assets/resume/NADELA RESUME.pdf" download><span class="btn-text">Download PDF</span><span class="btn-shine" aria-hidden="true"></span></a>
-            <a class="btn btn-glass" href="assets/resume/NADELA RESUME.pdf" target="_blank" rel="noopener">Open in browser</a>
-          </div>
-        </article>
-        <article class="resume-card glass-card anim-init">
-          <div class="certificate-header">
-            <div><p class="eyebrow">Credential</p><h3>Latest Certification</h3></div>
-            <a class="btn btn-glass btn-small" href="assets/images/certi.jpg" target="_blank" rel="noopener">View full</a>
-          </div>
-          <figure class="certificate-figure">
-            <img src="assets/images/certi.jpg" alt="Certificate highlighting Desmond's recent achievement" loading="lazy" decoding="async">
-          </figure>
-          <div class="row">
-            <a class="btn btn-glow" href="assets/images/certi.jpg" download><span class="btn-text">Download JPG</span><span class="btn-shine" aria-hidden="true"></span></a>
-            <a class="btn btn-glass" href="assets/images/certi.jpg" target="_blank" rel="noopener">Open in new tab</a>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <!-- CONTACT -->
-    <section id="contact" class="section">
-      <div class="section-label anim-init"><span class="section-num">05</span><span class="section-line"></span><span>Connect</span></div>
-      <h2 class="anim-init">Let's Work Together</h2>
-      <p class="anim-init">I respond fastest on email or chat &mdash; pick what works best for you.</p>
-      <div class="contact">
-        <div class="reach-status glass-card anim-init">
-          <div class="status-dot"></div>
-          <div><span class="status-badge" id="reachStatusBadge" role="status">Available for internship / freelance</span><span class="status-note" id="reachStatusNote">Replies within 24 hours.</span></div>
-        </div>
-        <div class="contact-cards">
-          <div class="contact-card glass-card anim-init"><span class="contact-card-icon">&#x1F4E7;</span><div><span class="contact-card-label">Email</span><code id="displayEmail">you@email.com</code></div><button id="copyEmail" class="btn btn-glass btn-small">Copy</button></div>
-          <div class="contact-card glass-card anim-init"><span class="contact-card-icon">&#x1F4F1;</span><div><span class="contact-card-label">Phone</span><code id="displayPhone">+639453191694</code></div></div>
-        </div>
-        <div class="social-row anim-init">
-          <a class="social-link" href="https://www.facebook.com/mondsssss/" target="_blank" rel="noopener" aria-label="Facebook"><img class="social-icon" src="assets/icons/facebook-svgrepo-com.svg" alt="Facebook" /></a>
-          <a class="social-link" href="https://www.linkedin.com/in/desmond-nadela" target="_blank" rel="noopener" aria-label="LinkedIn"><img class="social-icon" src="assets/icons/linkedin-svgrepo-com.svg" alt="LinkedIn" /></a>
-          <a class="social-link" href="https://github.com/rayeruuu" target="_blank" rel="noopener" aria-label="GitHub"><img class="social-icon" src="assets/icons/github-svgrepo-com.svg" alt="GitHub" /></a>
-        </div>
-        <div class="reach-cta anim-init">
-          <a class="btn btn-glow" id="emailLink" href="mailto:you@email.com"><span class="btn-text">Send Email</span><span class="btn-shine" aria-hidden="true"></span></a>
-          <a class="btn btn-glass" href="https://www.linkedin.com/in/desmond-nadela" target="_blank" rel="noopener">Connect on LinkedIn</a>
-          <a class="btn btn-glass" id="whatsAppLink" href="https://wa.me/639453191694" target="_blank" rel="noopener">Chat on WhatsApp</a>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="footer-content">
-      <p>&copy; <span id="year"></span> Desmond Nadela. Crafted with passion.</p>
-      <p class="footer-sub">Built with HTML, CSS, JS &amp; <a href="https://animejs.com" target="_blank" rel="noopener">anime.js</a></p>
     </div>
-  </footer>
+    <div class="hud-bar">
+      <div class="hud-left">
+        <span class="hud-hint"><kbd>Esc</kbd> Back</span>
+      </div>
+      <div class="hud-right"></div>
+    </div>
+  </div>
 
-  <!-- Back to top -->
-  <button id="backToTop" class="back-to-top" aria-label="Back to top">
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 16V4M10 4L4 10M10 4l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </button>
+  <!-- ============ RESUME ============ -->
+  <div class="game-screen" id="screenResume">
+    <div class="screen-header">
+      <button class="screen-back-btn" data-screen="screenMenu" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        BACK
+      </button>
+      <div class="screen-title-wrap">
+        <span class="screen-eyebrow">DESMOND NADELA</span>
+        <h2 class="screen-title">RESUME</h2>
+      </div>
+    </div>
+    <div class="screen-body panel-layout">
+      <article class="resume-panel glass-card">
+        <div class="resume-panel-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+        <h3>My Resume</h3>
+        <p class="muted">Full CV with experience, education, and skills.</p>
+        <div class="resume-actions">
+          <a class="btn btn-glow" href="assets/resume/NADELA RESUME.pdf" download>
+            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download PDF
+          </a>
+          <a class="btn btn-glass" href="assets/resume/NADELA RESUME.pdf" target="_blank" rel="noopener">
+            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Open
+          </a>
+        </div>
+      </article>
+      <article class="resume-panel glass-card">
+        <div class="resume-panel-top">
+          <div>
+            <p class="eyebrow">Credential</p>
+            <h3>Latest Certification</h3>
+          </div>
+          <a class="btn btn-glass btn-small" href="assets/images/certi.jpg" target="_blank" rel="noopener">
+            <svg class="btn-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            View full
+          </a>
+        </div>
+        <figure class="certificate-figure">
+          <img src="assets/images/certi.jpg" alt="Certificate highlighting Desmond's recent achievement" loading="lazy" decoding="async">
+        </figure>
+        <div class="resume-actions">
+          <a class="btn btn-glow" href="assets/images/certi.jpg" download>
+            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download JPG
+          </a>
+          <a class="btn btn-glass" href="assets/images/certi.jpg" target="_blank" rel="noopener">
+            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Open
+          </a>
+        </div>
+      </article>
+    </div>
+    <div class="hud-bar">
+      <div class="hud-left">
+        <span class="hud-hint"><kbd>Esc</kbd> Back</span>
+      </div>
+      <div class="hud-right"></div>
+    </div>
+  </div>
 
-  <!-- Project detail modal -->
+  <!-- ============ CONTACT ============ -->
+  <div class="game-screen" id="screenContact">
+    <div class="screen-header">
+      <button class="screen-back-btn" data-screen="screenMenu" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        BACK
+      </button>
+      <div class="screen-title-wrap">
+        <span class="screen-eyebrow">DESMOND NADELA</span>
+        <h2 class="screen-title">CONTACT</h2>
+      </div>
+    </div>
+    <div class="screen-body contact-layout">
+      <div class="contact-status glass-card">
+        <div class="status-dot"></div>
+        <div><span class="status-badge" id="reachStatusBadge" role="status">Available for internship / freelance</span><span class="status-note" id="reachStatusNote">Replies within 24 hours.</span></div>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-card glass-card">
+          <span class="contact-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+          <div><span class="contact-card-label">Email</span><code id="displayEmail">you@email.com</code></div>
+          <button id="copyEmail" class="btn btn-glass btn-small" type="button">Copy</button>
+        </div>
+        <div class="contact-card glass-card">
+          <span class="contact-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+          <div><span class="contact-card-label">Phone</span><code id="displayPhone">+639453191694</code></div>
+        </div>
+      </div>
+      <div class="contact-social">
+        <a class="social-link" href="https://www.facebook.com/mondsssss/" target="_blank" rel="noopener" aria-label="Facebook"><img class="social-icon" src="assets/icons/facebook-svgrepo-com.svg" alt="Facebook" /></a>
+        <a class="social-link" href="https://www.linkedin.com/in/desmond-nadela" target="_blank" rel="noopener" aria-label="LinkedIn"><img class="social-icon" src="assets/icons/linkedin-svgrepo-com.svg" alt="LinkedIn" /></a>
+        <a class="social-link" href="https://github.com/rayeruuu" target="_blank" rel="noopener" aria-label="GitHub"><img class="social-icon" src="assets/icons/github-svgrepo-com.svg" alt="GitHub" /></a>
+      </div>
+      <div class="contact-cta">
+        <a class="btn btn-glow" id="emailLink" href="mailto:you@email.com">
+          <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Send Email
+        </a>
+        <a class="btn btn-glass" href="https://www.linkedin.com/in/desmond-nadela" target="_blank" rel="noopener">
+          <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+          LinkedIn
+        </a>
+        <a class="btn btn-glass" id="whatsAppLink" href="https://wa.me/639453191694" target="_blank" rel="noopener">
+          <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          WhatsApp
+        </a>
+      </div>
+    </div>
+    <div class="hud-bar">
+      <div class="hud-left">
+        <span class="hud-hint"><kbd>Esc</kbd> Back</span>
+      </div>
+      <div class="hud-right"></div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PROJECT MODAL (preserved from original)
+       ================================================================ -->
   <div id="projectModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="modal-overlay" data-close></div>
     <div class="modal-dialog" role="document">
-      <button class="modal-close btn btn-glass" aria-label="Close" data-close>&#x2715;</button>
+      <button class="modal-close btn btn-glass" aria-label="Close" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       <div class="modal-content">
         <header class="modal-header">
-          <div><p class="modal-eyebrow">Project spotlight</p><h3 id="modalTitle">Project</h3></div>
+          <div><p class="modal-eyebrow"><svg class="modal-eyebrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>Project spotlight</p><h3 id="modalTitle">Project</h3></div>
           <div id="modalTechChips" class="chips"></div>
         </header>
         <div class="modal-body">
@@ -302,8 +389,8 @@
             <div class="carousel" aria-roledescription="carousel">
               <div class="slides" id="carouselSlides"></div>
               <div class="controls">
-                <button class="ctrl prev btn btn-glass" id="carouselPrev" aria-label="Previous">&#x25C0;</button>
-                <button class="ctrl next btn btn-glass" id="carouselNext" aria-label="Next">&#x25B6;</button>
+                <button class="ctrl prev btn btn-glass" id="carouselPrev" aria-label="Previous"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+                <button class="ctrl next btn btn-glass" id="carouselNext" aria-label="Next"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
               </div>
             </div>
             <div class="modal-media-meta">
@@ -316,22 +403,24 @@
           </section>
           <div id="modalLinks" class="modal-actions"></div>
           <section class="modal-accordions">
-            <details class="modal-accordion" id="modalLongSection" open><summary>Description</summary><div class="modal-accordion__content"><p id="modalLongDesc"></p></div></details>
-            <details class="modal-accordion" id="modalContributionSection" open><summary>Contribution</summary><div class="modal-accordion__content"><p id="modalContribution"></p></div></details>
-            <details class="modal-accordion" id="modalFeaturesSection" open><summary>Key Features</summary><div class="modal-accordion__content"><ul id="modalFeatures"></ul></div></details>
+            <details class="modal-accordion" id="modalLongSection" open><summary><svg class="accordion-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>Description</summary><div class="modal-accordion__content"><p id="modalLongDesc"></p></div></details>
+            <details class="modal-accordion" id="modalContributionSection" open><summary><svg class="accordion-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Contribution</summary><div class="modal-accordion__content"><p id="modalContribution"></p></div></details>
+            <details class="modal-accordion" id="modalFeaturesSection" open><summary><svg class="accordion-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Key Features</summary><div class="modal-accordion__content"><ul id="modalFeatures"></ul></div></details>
           </section>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Code overlay -->
+  <!-- ================================================================
+       CODE OVERLAY (preserved from original)
+       ================================================================ -->
   <div id="codeOverlay" class="code-overlay" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="backdrop" data-code-close></div>
     <div class="dialog">
       <header class="code-overlay__header">
-        <div><p class="code-overlay__eyebrow">Full source</p><p id="codeOverlayTitle" class="code-overlay__title"></p><p id="codeOverlayMeta" class="code-overlay__meta"></p></div>
-        <button class="close" aria-label="Close code overlay" data-code-close>&#x2715;</button>
+        <div><p class="code-overlay__eyebrow"><svg class="code-eyebrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Full source</p><p id="codeOverlayTitle" class="code-overlay__title"></p><p id="codeOverlayMeta" class="code-overlay__meta"></p></div>
+        <button class="close" aria-label="Close code overlay" data-code-close><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </header>
       <div class="code-overlay__nav" id="codeOverlayNav" hidden><div class="code-tabs" id="codeOverlayTabs" role="tablist" aria-label="Code files"></div></div>
       <pre id="codeOverlayPre"><code id="codeOverlayContent" class="language-none"></code></pre>
@@ -339,6 +428,9 @@
     </div>
   </div>
 
+  <!-- ================================================================
+       SCRIPTS
+       ================================================================ -->
   <script defer data-domain="your-username.github.io" src="https://plausible.io/js/script.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-csharp.min.js" defer></script>

@@ -472,21 +472,10 @@ const yearEl = document.getElementById("year");
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 const snippetCache = new Map();
 
-// Personalize text
-const heroName = document.querySelector(".hero-name .gradient") || document.querySelector(".hero h1 span");
+// Personalize — game UI uses static HTML headings; only photo/contact fields are dynamic
 const resolvedName = (CONFIG.name && CONFIG.name !== "Your Name")
   ? CONFIG.name
-  : (heroName?.textContent?.trim() || "Your Name");
-const brandTextEl = document.querySelector(".brand-text");
-const brand = document.querySelector(".brand");
-if (brandTextEl) {
-  brandTextEl.textContent = resolvedName.split(" ")[0];
-} else if (brand) {
-  brand.textContent = `<${resolvedName.split(" ")[0]}'s Portfolio />`;
-}
-if (heroName) heroName.textContent = resolvedName;
-const githubLink = document.getElementById("githubLink");
-if (githubLink) githubLink.href = `https://github.com/${CONFIG.github}`;
+  : "Your Name";
 const heroPhoto = document.getElementById("heroPhoto");
 if (heroPhoto && CONFIG.photo) {
   heroPhoto.src = CONFIG.photo;
@@ -538,137 +527,106 @@ if (copyEmailBtn) {
   localStorage.removeItem('theme');
 })();
 
-// Render projects
-const grid = document.getElementById("projectsGrid");
-const paginationEl = document.getElementById("projectsPagination");
+// Render war cards (BF5-style horizontal portrait cards)
+const warCardsEl = document.getElementById("warCards");
+const warCardCounterEl = document.getElementById("warCardCounter");
 const filterButtons = Array.from(document.querySelectorAll(".filter"));
 let activeFilter = "All";
-let currentPage = 0;
-const PAGE_SIZE = 6;
+let activeWarCardIndex = 0;
 
-function renderProjects() {
-  if (!grid) return;
-  grid.innerHTML = "";
+function renderWarCards() {
+  if (!warCardsEl) return;
+  warCardsEl.innerHTML = "";
   const items = PROJECTS.filter(p => activeFilter === "All" || p.category === activeFilter);
-  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
-  if (currentPage >= totalPages) currentPage = totalPages - 1;
-  const start = currentPage * PAGE_SIZE;
-  const end = start + PAGE_SIZE;
-  const visibleItems = items.slice(start, end);
-  for (const p of visibleItems) {
-    const card = document.createElement("article");
-    card.className = "card is-clickable";
+  const featuredLocal = items.findIndex(p => p.title === "MinaTamis");
+  const defaultActive = featuredLocal >= 0 ? featuredLocal : 0;
+  activeWarCardIndex = defaultActive;
+
+  for (let i = 0; i < items.length; i++) {
+    const p = items[i];
     const projectIndex = PROJECTS.indexOf(p);
+    const card = document.createElement("article");
+    card.className = "war-card" + (i === defaultActive ? " active" : "");
     card.dataset.index = String(projectIndex);
-    // Make whole card open the modal (and keyboard accessible)
-    card.setAttribute('role', 'button');
+    card.dataset.localIndex = String(i);
+    card.setAttribute("role", "button");
     card.tabIndex = 0;
-    card.setAttribute('aria-label', `Open details: ${p.title}`);
-    const open = () => openProjectModal(projectIndex);
-    card.addEventListener('click', (e) => {
-      // Don't open when clicking interactive links inside
-      if (e.target.closest('a, button')) return;
-      playClickAnimation(card, e);
-      // slight delay to let the animation register visually
-      setTimeout(open, 120);
-    });
-    card.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); playClickAnimation(card, e); setTimeout(open, 120); }
-    });
+    card.setAttribute("aria-label", `Open details: ${p.title}`);
 
-    const media = document.createElement("div");
-    media.className = "card-media";
     const coverImage = p.image || (Array.isArray(p.media?.images) && p.media.images.length ? p.media.images[0] : null);
-    if (coverImage) {
-      const img = document.createElement("img");
-      img.alt = `${p.title} cover`;
-      img.loading = "lazy";
-      img.decoding = "async";
-      img.fetchPriority = "low";
-      applyResponsiveImageSources(img, coverImage, { immediate: true, sizes: "(max-width: 720px) 100vw, 320px" });
-      media.appendChild(img);
-    } else {
-      media.appendChild(createPlaceholder());
-    }
 
-    const quickActions = document.createElement('div');
-    quickActions.className = 'card-quick-actions';
+    const bg = document.createElement("div");
+    bg.className = "war-card__bg";
+    if (coverImage) bg.style.backgroundImage = `url('${coverImage}')`;
 
-    const viewBtn = document.createElement('button');
-    viewBtn.type = 'button';
-    viewBtn.className = 'card-quick-btn';
-    viewBtn.setAttribute('data-tip', 'Open details');
-    viewBtn.innerHTML = '<span class="card-quick-icon" aria-hidden="true">◉</span><span class="card-quick-text">View</span>';
-    viewBtn.setAttribute('aria-label', `View details for ${p.title}`);
-    viewBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      open();
-    });
+    const overlay = document.createElement("div");
+    overlay.className = "war-card__overlay";
 
-    quickActions.appendChild(viewBtn);
+    const cat = document.createElement("span");
+    cat.className = "war-card__category";
+    cat.textContent = p.category;
 
-    const primarySnippet = getPrimarySnippet(p);
-    if (primarySnippet) {
-      const codeBtn = document.createElement('button');
-      codeBtn.type = 'button';
-      codeBtn.className = 'card-quick-btn card-quick-btn--ghost';
-      codeBtn.setAttribute('data-tip', 'Open code');
-      codeBtn.innerHTML = '<span class="card-quick-icon" aria-hidden="true">&lt;/&gt;</span><span class="card-quick-text">Code</span>';
-      codeBtn.setAttribute('aria-label', `Open code for ${p.title}`);
-      codeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showProjectCode(p, primarySnippet);
-      });
-      quickActions.appendChild(codeBtn);
-    }
-
-    media.appendChild(quickActions);
-
-    const body = document.createElement("div");
-    body.className = "card-body";
-
-    const h3 = document.createElement("h3");
-    h3.textContent = p.title;
+    const title = document.createElement("h3");
+    title.className = "war-card__title";
+    title.textContent = p.title;
 
     const desc = document.createElement("p");
+    desc.className = "war-card__desc";
     desc.textContent = p.description;
 
-    const tags = document.createElement("div");
-    tags.className = "tags";
-    for (const t of p.tags ?? []) {
-      const el = document.createElement("span");
-      el.className = "tag"; el.textContent = t;
-      tags.appendChild(el);
-    }
+    overlay.append(cat, title, desc);
+    card.append(bg, overlay);
 
-    // No card-level actions; all actions live inside the modal for a cleaner grid
-    body.append(h3, desc, tags);
-    card.append(media, body);
-    grid.appendChild(card);
-  }
+    card.addEventListener("click", () => {
+      setActiveWarCard(i);
+      playClickAnimation(card, null);
+      setTimeout(() => openProjectModal(projectIndex), 150);
+    });
 
-  // Render pagination buttons
-  if (paginationEl) {
-    paginationEl.innerHTML = "";
-    if (totalPages > 1) {
-      for (let i = 0; i < totalPages; i++) {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.textContent = String(i + 1);
-        if (i === currentPage) btn.classList.add("is-active");
-        btn.addEventListener("click", () => {
-          currentPage = i;
-          renderProjects();
-        });
-        paginationEl.appendChild(btn);
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        setActiveWarCard(i);
+        openProjectModal(projectIndex);
       }
-    }
+    });
+
+    warCardsEl.appendChild(card);
   }
 
-  // Trigger anime.js re-entrance for newly rendered cards
-  if (typeof window._animeReanimateCards === 'function') {
+  updateWarCardCounter();
+
+  // Scroll featured card into view
+  const featuredCard = warCardsEl.children[defaultActive];
+  if (featuredCard) {
+    requestAnimationFrame(() => {
+      featuredCard.scrollIntoView({ behavior: "auto", block: "nearest", inline: "center" });
+    });
+  }
+
+  if (typeof window._animeReanimateCards === "function") {
     requestAnimationFrame(() => window._animeReanimateCards());
   }
+}
+
+function setActiveWarCard(localIndex) {
+  const cards = warCardsEl?.querySelectorAll(".war-card");
+  if (!cards?.length) return;
+  cards.forEach(c => c.classList.remove("active"));
+  if (cards[localIndex]) {
+    cards[localIndex].classList.add("active");
+    cards[localIndex].scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    activeWarCardIndex = localIndex;
+    updateWarCardCounter();
+  }
+}
+
+function updateWarCardCounter() {
+  if (!warCardCounterEl) return;
+  const cards = warCardsEl?.querySelectorAll(".war-card");
+  const total = cards?.length || 0;
+  const pad = (n) => String(n).padStart(2, "0");
+  warCardCounterEl.textContent = `${pad(activeWarCardIndex + 1)} / ${pad(total)}`;
 }
 
 function getPrimarySnippet(project) {
@@ -747,14 +705,13 @@ filterButtons.forEach(btn => {
     // a11y: update aria-selected
     filterButtons.forEach(b => b.setAttribute("aria-selected", String(b === btn)));
     activeFilter = btn.dataset.filter;
-    currentPage = 0; // reset to first page on filter change
-    renderProjects();
+    renderWarCards();
     recordMetric('filters', activeFilter || 'All');
     track('Filter Apply', { filter: activeFilter || 'All' });
   });
 });
 
-renderProjects();
+renderWarCards();
 
 // Initialize dot meters (skill level indicators)
 function initDotMeters(){
@@ -771,7 +728,7 @@ function initDotMeters(){
       m.appendChild(dot);
     }
     // accessible label: derive card heading + textual tier
-    const card = m.closest('.stack-item');
+    const card = m.closest('.loadout-card');
     const heading = card?.querySelector('h3')?.textContent?.trim() || 'Skill';
     // attempt to reverse-map numeric level to tier string
     let tierName = Object.keys(tiers).find(k => tiers[k] === level) || `${level}/5`;
@@ -781,22 +738,7 @@ function initDotMeters(){
 }
 initDotMeters();
 
-// Hero intro animation
-document.addEventListener('DOMContentLoaded', () => {
-  const hero = document.querySelector('.hero');
-  if (hero) {
-    requestAnimationFrame(() => hero.classList.add('hero-loaded'));
-  }
-});
-
-// Scroll reveal (gentle)
-const revealEls = Array.from(document.querySelectorAll('.reveal'));
-if ('IntersectionObserver' in window) {
-  const io = new IntersectionObserver((entries) => {
-    for (const e of entries) if (e.isIntersecting) e.target.classList.add('in');
-  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.05 });
-  revealEls.forEach(el => io.observe(el));
-}
+// No scroll-based features — game screens are viewport-locked
 
 // Analytics helpers (Plausible)
 function track(event, props){
@@ -860,26 +802,7 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Emoji feedback bar
-(function initFeedback(){
-  const bar = document.querySelector('.emoji-bar');
-  const thanks = document.getElementById('feedbackThanks');
-  if (!bar) return;
-  const KEY = 'portfolio_feedback_given';
-  const given = localStorage.getItem(KEY) === '1';
-  if (given && thanks) {
-    thanks.hidden = false;
-  }
-  bar.addEventListener('click', (e) => {
-    const btn = e.target.closest('.emoji');
-    if (!btn) return;
-    if (localStorage.getItem(KEY) === '1') return;
-    const reaction = btn.dataset.reaction;
-    track('Feedback', { reaction });
-    localStorage.setItem(KEY, '1');
-    if (thanks) thanks.hidden = false;
-  });
-})();
+// Feedback bar removed — not part of game UI
 
 // ---------- Project Modal ----------
 let currentProject = null;
@@ -970,12 +893,8 @@ document.addEventListener('click', (e) => {
   }
 });
 
-function lockScroll(){ document.body.style.overflow = 'hidden'; }
-function unlockScroll(){
-  const modalOpen = modal && modal.getAttribute('aria-hidden') === 'false';
-  const overlayOpen = codeOverlay && codeOverlay.getAttribute('aria-hidden') === 'false';
-  if (!modalOpen && !overlayOpen) document.body.style.overflow = '';
-}
+function lockScroll(){ /* body overflow already hidden for game UI */ }
+function unlockScroll(){ /* body overflow stays hidden for game UI */ }
 
 function openProjectModal(index){
   currentProject = PROJECTS[index];
@@ -1038,14 +957,14 @@ function openProjectModal(index){
     a.target = '_blank';
     a.rel = 'noopener';
     a.className = 'btn btn-outline';
-    a.textContent = 'Demo';
+    a.innerHTML = '<svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Demo';
     modalLinks.appendChild(a);
   }
   if (videoSlideIndex !== null) {
     const videoBtn = document.createElement('button');
     videoBtn.type = 'button';
     videoBtn.className = 'btn btn-outline';
-    videoBtn.textContent = 'Video';
+    videoBtn.innerHTML = '<svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Video';
     videoBtn.addEventListener('click', () => {
       stopAutoplay();
       currentSlide = videoSlideIndex;
@@ -1060,7 +979,7 @@ function openProjectModal(index){
     const codeBtn = document.createElement('button');
     codeBtn.type = 'button';
     codeBtn.className = 'btn btn-outline';
-    codeBtn.textContent = 'Code';
+    codeBtn.innerHTML = '<svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> Code';
     codeBtn.title = getSnippetLabel(snippet);
     codeBtn.addEventListener('click', () => showProjectCode(currentProject, snippet));
     modalLinks.appendChild(codeBtn);
@@ -1070,7 +989,7 @@ function openProjectModal(index){
     const trigger = document.createElement('button');
     trigger.type = 'button';
     trigger.className = 'btn btn-outline code-dropdown__trigger';
-    trigger.textContent = 'Code';
+    trigger.innerHTML = '<svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> Code <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
     trigger.setAttribute('aria-haspopup', 'true');
     trigger.setAttribute('aria-expanded', 'false');
     dropdown.appendChild(trigger);
@@ -1304,7 +1223,14 @@ document.addEventListener('keydown', (e)=>{
       closeCodeOverlay();
       return;
     }
-    closeProjectModal();
+    if (modal && modal.getAttribute('aria-hidden') === 'false') {
+      closeProjectModal();
+      return;
+    }
+    // Navigate back to menu from any sub-screen
+    if (typeof activeScreenId !== 'undefined' && activeScreenId !== 'screenMenu') {
+      navigateToScreen('screenMenu');
+    }
   }
 });
 document.querySelectorAll('[data-code-close]').forEach(btn => btn.addEventListener('click', closeCodeOverlay));
@@ -1470,4 +1396,112 @@ function closeCodeOverlay(){
   if (codeOverlayMeta) codeOverlayMeta.textContent = '';
   codeOverlayState = null;
   unlockScroll();
+}
+
+// ============================================================
+// SCREEN NAVIGATION — Game UI screen switching
+// ============================================================
+const SCREEN_IDS = [
+  'screenMenu', 'screenProjects', 'screenAbout',
+  'screenSkills', 'screenResume', 'screenContact'
+];
+let activeScreenId = 'screenMenu';
+let menuFocusIndex = 0;
+
+function navigateToScreen(screenId) {
+  if (!SCREEN_IDS.includes(screenId) || screenId === activeScreenId) return;
+  const prev = document.getElementById(activeScreenId);
+  const next = document.getElementById(screenId);
+  if (!next) return;
+
+  // Hide old screen instantly
+  if (prev) prev.classList.remove('active');
+
+  // Show new screen
+  next.classList.add('active');
+  activeScreenId = screenId;
+
+  // Animate the new screen in
+  if (typeof window._animeScreenTransition === 'function' && screenId !== 'screenMenu') {
+    window._animeScreenTransition(next);
+  }
+  if (screenId === 'screenMenu' && typeof window._animeMenuEntrance === 'function') {
+    window._animeMenuEntrance();
+  }
+
+  // Render war cards when entering projects screen
+  if (screenId === 'screenProjects') {
+    renderWarCards();
+  }
+
+  // Re-init dot meters when entering skills screen
+  if (screenId === 'screenSkills') {
+    initDotMeters();
+  }
+
+  track('Screen Navigate', { screen: screenId });
+}
+
+// Wire up menu items
+document.querySelectorAll('.menu-item[data-screen]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.screen;
+    if (target) navigateToScreen(target);
+  });
+});
+
+// Wire up back buttons
+document.querySelectorAll('.screen-back-btn[data-screen]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.screen;
+    if (target) navigateToScreen(target);
+  });
+});
+
+// Keyboard navigation (arrow keys for menu items and war cards)
+document.addEventListener('keydown', (e) => {
+  // Skip if modal or code overlay is open
+  if (modal && modal.getAttribute('aria-hidden') === 'false') return;
+  if (codeOverlay && codeOverlay.getAttribute('aria-hidden') === 'false') return;
+
+  if (activeScreenId === 'screenMenu') {
+    const menuItems = Array.from(document.querySelectorAll('.menu-item'));
+    if (!menuItems.length) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      menuFocusIndex = Math.min(menuFocusIndex + 1, menuItems.length - 1);
+      menuItems[menuFocusIndex]?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      menuFocusIndex = Math.max(menuFocusIndex - 1, 0);
+      menuItems[menuFocusIndex]?.focus();
+    }
+  }
+
+  if (activeScreenId === 'screenProjects') {
+    const cards = document.querySelectorAll('#warCards .war-card');
+    if (!cards.length) return;
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setActiveWarCard(Math.min(activeWarCardIndex + 1, cards.length - 1));
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setActiveWarCard(Math.max(activeWarCardIndex - 1, 0));
+    } else if (e.key === 'Enter') {
+      const active = cards[activeWarCardIndex];
+      if (active) {
+        const idx = parseInt(active.dataset.index, 10);
+        if (!isNaN(idx)) openProjectModal(idx);
+      }
+    }
+  }
+});
+
+// Mouse-wheel horizontal scroll for war cards
+if (warCardsEl) {
+  warCardsEl.addEventListener('wheel', (e) => {
+    if (Math.abs(e.deltaY) < 4) return;
+    e.preventDefault();
+    warCardsEl.scrollBy({ left: e.deltaY * 2, behavior: 'auto' });
+  }, { passive: false });
 }
