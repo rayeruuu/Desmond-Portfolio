@@ -33,127 +33,225 @@
     })();
   }
 
-  // ---- Photo ring pulse ----
-  document.querySelectorAll('.menu-photo-ring').forEach(ring => {
-    animate(ring, {
-      opacity: [0.3, 1],
-      scale: [0.98, 1.02],
-      duration: 2000,
-      loop: true,
-      alternate: true,
-      ease: 'inOutSine'
-    });
-  });
-
-  // ---- Stat counter animation ----
-  document.querySelectorAll('.stat-num[data-count]').forEach(el => {
-    const target = parseInt(el.dataset.count, 10);
-    const obj = { val: 0 };
-    animate(obj, {
-      val: [0, target],
-      duration: 1800,
-      ease: 'outExpo',
-      delay: 1200,
-      onUpdate: () => { el.textContent = Math.round(obj.val); }
-    });
-  });
-
   // ---- Year in footer/HUD ----
   const yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   // ==================================================================
-  // INTRO — counter + text reveal, then show main menu
+  // INTRO — BF2042 tactical boot sequence
   // ==================================================================
-  const intro     = document.getElementById('intro');
-  const introPct  = document.getElementById('introPct');
-  const introLine = intro?.querySelector('.intro-line');
-  const introLabel = intro?.querySelector('.intro-label');
-  const introName = intro?.querySelector('.intro-name');
+  const intro      = document.getElementById('intro');
+  const introPct   = document.getElementById('introPct');
+  const introBar   = document.querySelector('.intro-bar__fill');
+  const introLogo  = document.querySelector('.intro-logo-mark');
+  const introStatus = document.querySelector('.intro-status');
+  const introBarWrap = document.querySelector('.intro-bar-wrap');
+  const introChecks = document.querySelectorAll('.intro-check');
+  const introLabel  = document.getElementById('introLabel');
 
   if (intro && introPct) {
     document.body.classList.add('intro-active');
 
+    // Stagger element reveals
+    setTimeout(() => { introLogo?.classList.add('is-visible'); }, 100);
+    setTimeout(() => { introStatus?.classList.add('is-visible'); }, 400);
+    setTimeout(() => { introBarWrap?.classList.add('is-visible'); }, 600);
+
+    // Show system checks at their data-delay times
+    introChecks.forEach(check => {
+      const d = Number(check.dataset.delay) || 0;
+      setTimeout(() => { check.classList.add('is-visible'); }, 700 + d);
+    });
+
+    // Animate counter + bar fill
     const counter = { val: 0 };
     animate(counter, {
       val: [0, 100],
-      duration: 2400,
+      duration: 2600,
       ease: 'inOutExpo',
       onUpdate: () => {
-        introPct.textContent = Math.round(counter.val);
+        const v = Math.round(counter.val);
+        introPct.textContent = v + '%';
+        if (introBar) introBar.style.width = v + '%';
       },
       onComplete: () => {
+        // Update label
+        if (introLabel) introLabel.textContent = 'SYSTEMS ONLINE';
+
         setTimeout(() => {
           intro.classList.add('is-done');
           document.body.classList.remove('intro-active');
+          document.body.classList.add('title-active');
 
-          // Animate the active game screen in
-          const activeScreen = document.querySelector('.game-screen.active');
-          if (activeScreen) {
-            animate(activeScreen, {
-              opacity: [0, 1],
-              duration: 600,
-              ease: 'outExpo',
-            });
+          // Show title screen instead of going straight to menu
+          const titleScreen = document.getElementById('titleScreen');
+          if (titleScreen) {
+            // Small delay so the intro fade-out completes first
+            setTimeout(() => {
+              titleScreen.classList.add('is-visible');
+              titleScreen.setAttribute('aria-hidden', 'false');
+              initTitleBgCycle();
+            }, 200);
           }
-
-          // Animate shader bg + background elements
-          animate('#shaderBg, .bg-canvas, .cursor-glow', {
-            opacity: [0, 1],
-            duration: 800,
-            ease: 'outExpo',
-            delay: 100,
-          });
-
-          // Animate menu elements
-          animateMenuEntrance();
         }, 600);
       }
     });
-
-    setTimeout(() => { introLine?.classList.add('is-active'); }, 100);
-    setTimeout(() => { introLabel?.classList.add('is-visible'); }, 400);
-    setTimeout(() => { introName?.classList.add('is-visible'); }, 800);
 
     // Safety: remove intro after 5s
     setTimeout(() => {
       if (!intro.classList.contains('is-done')) {
         intro.classList.add('is-done');
         document.body.classList.remove('intro-active');
+        document.body.classList.add('title-active');
+        const ts = document.getElementById('titleScreen');
+        if (ts && !ts.classList.contains('is-visible')) {
+          setTimeout(() => {
+            ts.classList.add('is-visible');
+            ts.setAttribute('aria-hidden', 'false');
+            initTitleBgCycle();
+          }, 200);
+        }
       }
     }, 5000);
   }
 
-  // ---- Menu entrance animation ----
+  // ---- Title background image cycling ----
+  let titleCycleTimer = null;
+  function initTitleBgCycle() {
+    const bgA = document.getElementById('titleBgA');
+    const bgB = document.getElementById('titleBgB');
+    if (!bgA || !bgB || typeof PROJECTS === 'undefined' || !PROJECTS.length) return;
+
+    // Collect all unique project images
+    const images = PROJECTS.map(p => p.image).filter(Boolean);
+    if (images.length === 0) return;
+
+    let currentIdx = 0;
+    let showingA = true;
+
+    // Preload images for smooth transitions
+    images.forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
+
+    // Set initial image on layer A
+    bgA.style.backgroundImage = `url('${images[0]}')`;
+    bgA.style.animation = 'titleZoom 8s ease-out forwards';
+
+    function cycleBg() {
+      currentIdx = (currentIdx + 1) % images.length;
+      const nextSrc = `url('${images[currentIdx]}')`;
+
+      if (showingA) {
+        // Load next on B, fade B in (A out)
+        bgB.style.backgroundImage = nextSrc;
+        bgB.style.animation = 'none';
+        void bgB.offsetWidth;  // force reflow
+        bgB.style.animation = 'titleZoom 8s ease-out forwards';
+        bgA.classList.add('is-fading');
+        bgB.classList.add('is-fading');
+      } else {
+        // Load next on A, fade A in (B out)
+        bgA.style.backgroundImage = nextSrc;
+        bgA.style.animation = 'none';
+        void bgA.offsetWidth;
+        bgA.style.animation = 'titleZoom 8s ease-out forwards';
+        bgA.classList.remove('is-fading');
+        bgB.classList.remove('is-fading');
+      }
+      showingA = !showingA;
+    }
+
+    titleCycleTimer = setInterval(cycleBg, 5000);
+  }
+
+  function stopTitleBgCycle() {
+    if (titleCycleTimer) {
+      clearInterval(titleCycleTimer);
+      titleCycleTimer = null;
+    }
+  }
+
+  // ---- Title screen → enter main menu ----
+  const titleScreen = document.getElementById('titleScreen');
+  const titleEnter = document.getElementById('titleEnter');
+  function enterFromTitle() {
+    if (!titleScreen || titleScreen.classList.contains('is-done')) return;
+
+    stopTitleBgCycle();
+    titleScreen.classList.add('is-exiting');
+
+    // Wait for the fade-out animation, then clean up and show menu
+    setTimeout(() => {
+      titleScreen.classList.add('is-done');
+      titleScreen.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('title-active');
+
+      // Animate the active game screen in
+      const activeScreen = document.querySelector('.game-screen.active');
+      if (activeScreen) {
+        animate(activeScreen, {
+          opacity: [0, 1],
+          duration: 800,
+          ease: 'outExpo',
+        });
+      }
+
+      // Animate shader bg + background elements
+      animate('#shaderBg, .bg-canvas, .cursor-glow', {
+        opacity: [0, 1],
+        duration: 1000,
+        ease: 'outExpo',
+        delay: 100,
+      });
+
+      // Animate menu elements
+      animateMenuEntrance();
+    }, 1000);
+  }
+  if (titleScreen) {
+    titleScreen.addEventListener('click', enterFromTitle);
+  }
+  // Also allow Enter / Space to proceed
+  document.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && titleScreen && titleScreen.classList.contains('is-visible') && !titleScreen.classList.contains('is-done') && !titleScreen.classList.contains('is-exiting')) {
+      e.preventDefault();
+      enterFromTitle();
+    }
+  });
+
+  // ---- Menu entrance animation (BF2042-style) ----
   function animateMenuEntrance() {
-    animate('.menu-eyebrow', {
-      opacity: [0, 1], translateX: ['-20px', '0px'],
-      duration: 600, ease: 'outExpo', delay: 100
+    animate('.bf-topnav', {
+      opacity: [0, 1], translateY: ['-10px', '0px'],
+      duration: 500, ease: 'outExpo', delay: 50
     });
-    animate('.menu-title', {
-      opacity: [0, 1], translateY: ['30px', '0px'],
-      duration: 800, ease: 'outExpo', delay: 200
+    animate('.bf-hero__title', {
+      opacity: [0, 1], translateY: ['18px', '0px'],
+      duration: 700, ease: 'outExpo', delay: 250
     });
-    animate('.menu-role', {
-      opacity: [0, 1], translateY: ['16px', '0px'],
-      duration: 600, ease: 'outExpo', delay: 400
+    animate('.bf-hero__desc, .bf-hero__creator, .bf-hero__divider', {
+      opacity: [0, 1], translateX: ['-10px', '0px'],
+      duration: 500, ease: 'outExpo', delay: 450
     });
-    animate('.menu-item', {
-      opacity: [0, 1], translateX: ['-20px', '0px'],
-      delay: stagger(80, { start: 500 }),
+    animate('.bf-panel', {
+      opacity: [0, 1], translateX: ['16px', '0px'],
+      duration: 600, ease: 'outExpo', delay: 350
+    });
+    animate('.bf-subnav-item', {
+      opacity: [0, 1], translateX: ['-10px', '0px'],
+      delay: stagger(50, { start: 500 }),
+      duration: 400, ease: 'outExpo'
+    });
+    animate('.bf-bcard', {
+      opacity: [0, 1], translateY: ['18px', '0px'], scale: [0.96, 1],
+      delay: stagger(80, { start: 550 }),
       duration: 600, ease: 'outExpo'
     });
-    animate('.menu-photo-wrap', {
-      opacity: [0, 1], scale: [0.8, 1],
-      duration: 900, ease: 'outBack(1.4)', delay: 300
-    });
-    animate('.menu-stats', {
-      opacity: [0, 1], translateY: ['16px', '0px'],
-      duration: 600, ease: 'outExpo', delay: 700
-    });
-    animate('.hud-bar', {
+    animate('#screenMenu .hud-bar', {
       opacity: [0, 1], translateY: ['10px', '0px'],
-      duration: 500, ease: 'outExpo', delay: 800
+      duration: 500, ease: 'outExpo', delay: 900
     });
   }
 

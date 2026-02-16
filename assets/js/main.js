@@ -75,35 +75,6 @@ function buildWhatsAppLink() {
 // Sample projects. Edit or add more.
 const PROJECTS = [
   {
-    title: "Lucid Dreams",
-    category: "Unity",
-    description: "Atmospheric first-person puzzle prototype exploring light-bending mechanics and spatial memory.",
-    longDescription: "Lucid Dreams plunges players into a surreal, dreamlike universe where the ordinary becomes bizarre and anything can turn hostile. Battle animated objects, explore unpredictable dreamscapes, and tackle physics-driven challenges in a world where each dream is a chaotic story of humor and surprises.",
-    contribution: "Group project – Programmed enemy pathfinding and AI behaviors, player movement and animation trees, and developed UI and scoring systems.",
-    featureList: [
-      "Surreal dreamlike environments",
-      "AI-driven enemy behaviors",
-      "Physics-based interactions",
-      "Player movement and animation trees",
-      "Scoring and UI systems"
-    ],
-    techChips: ["Unity", "C#"],
-    tags: ["Unity", "C#", "Puzzle"],
-    links: { demo: "#", github: "#" },
-    image: "assets/images/projects/unity/Lucid/lucid (1).png",
-    media: {
-      images: [
-        "assets/images/projects/unity/Lucid/lucid (1).png",
-        "assets/images/projects/unity/Lucid/lucid (2).png",
-        "assets/images/projects/unity/Lucid/lucid (3).png",
-        "assets/images/projects/unity/Lucid/lucid (4).png",
-        "assets/images/projects/unity/Lucid/lucid (5).png"
-      ],
-      video: "https://drive.google.com/file/d/1NBcFozqHpP69vo9QmxafhTvC09O-81e6/preview"
-    },
-    snippets: []
-  },
-  {
     title: "MinaTamis",
     category: "Unity",
     description: "Narrative-driven Unity experience showing a stylized food cart journey with custom shaders and lighting.",
@@ -147,6 +118,35 @@ const PROJECTS = [
         path: "assets/scripts/unity/MinaTamis/ObjectInteractionHandler.txt"
       }
     ]
+  },
+  {
+    title: "Lucid Dreams",
+    category: "Unity",
+    description: "Atmospheric first-person puzzle prototype exploring light-bending mechanics and spatial memory.",
+    longDescription: "Lucid Dreams plunges players into a surreal, dreamlike universe where the ordinary becomes bizarre and anything can turn hostile. Battle animated objects, explore unpredictable dreamscapes, and tackle physics-driven challenges in a world where each dream is a chaotic story of humor and surprises.",
+    contribution: "Group project – Programmed enemy pathfinding and AI behaviors, player movement and animation trees, and developed UI and scoring systems.",
+    featureList: [
+      "Surreal dreamlike environments",
+      "AI-driven enemy behaviors",
+      "Physics-based interactions",
+      "Player movement and animation trees",
+      "Scoring and UI systems"
+    ],
+    techChips: ["Unity", "C#"],
+    tags: ["Unity", "C#", "Puzzle"],
+    links: { demo: "#", github: "#" },
+    image: "assets/images/projects/unity/Lucid/lucid (1).png",
+    media: {
+      images: [
+        "assets/images/projects/unity/Lucid/lucid (1).png",
+        "assets/images/projects/unity/Lucid/lucid (2).png",
+        "assets/images/projects/unity/Lucid/lucid (3).png",
+        "assets/images/projects/unity/Lucid/lucid (4).png",
+        "assets/images/projects/unity/Lucid/lucid (5).png"
+      ],
+      video: "https://drive.google.com/file/d/1NBcFozqHpP69vo9QmxafhTvC09O-81e6/preview"
+    },
+    snippets: []
   },
   {
     title: "Bricks",
@@ -1505,3 +1505,184 @@ if (warCardsEl) {
     warCardsEl.scrollBy({ left: e.deltaY * 2, behavior: 'auto' });
   }, { passive: false });
 }
+
+// ---- Featured-cards carousel (all projects + hero fade) ----
+(function initFeaturedCarousel() {
+  const track = document.getElementById('bfFeaturedCards');
+  const hero = document.getElementById('bfHero');
+  const heroBg = document.getElementById('bfHeroBg');
+  const heroTitle = document.getElementById('bfHeroTitle');
+  const heroDesc = document.getElementById('bfHeroDesc');
+  const heroCreator = document.getElementById('bfHeroCreator');
+  if (!track || !hero) return;
+
+  const FADE_MS = 450;
+  const INTERVAL_MS = 4000;
+  let activeIdx = -1;
+  let timer = null;
+  let paused = false;
+  let transitioning = false;
+
+  /** Render all project cards into the track */
+  function renderCards() {
+    track.innerHTML = '';
+    PROJECTS.forEach((proj, i) => {
+      const card = document.createElement('div');
+      card.className = 'bf-bcard';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.dataset.screen = 'screenProjects';
+      card.dataset.idx = String(i);
+
+      const bg = document.createElement('div');
+      bg.className = 'bf-bcard__bg';
+      bg.style.backgroundImage = `url('${proj.image}')`;
+
+      const content = document.createElement('div');
+      content.className = 'bf-bcard__content';
+
+      if (proj.category && proj.category !== 'Other') {
+        const tag = document.createElement('span');
+        tag.className = 'bf-bcard__tag';
+        tag.textContent = proj.category.toUpperCase();
+        content.appendChild(tag);
+      }
+
+      const title = document.createElement('h4');
+      title.className = 'bf-bcard__title';
+      title.textContent = proj.title.toUpperCase();
+      content.appendChild(title);
+
+      card.appendChild(bg);
+      card.appendChild(content);
+      track.appendChild(card);
+    });
+  }
+
+  /** Update the hero section with fade out → swap → fade in */
+  function updateHero(idx, instant) {
+    if (transitioning && !instant) return;
+    const proj = PROJECTS[idx];
+    if (!proj) return;
+
+    const apply = () => {
+      heroBg.style.backgroundImage = `url('${proj.image}')`;
+      heroTitle.textContent = proj.title.toUpperCase();
+      heroDesc.textContent = proj.longDescription || proj.description || '';
+      heroCreator.textContent = `${proj.category.toUpperCase()} : DESMOND NADELA`;
+    };
+
+    if (instant) {
+      apply();
+      return;
+    }
+
+    transitioning = true;
+    hero.classList.add('bf-hero--fading');
+    setTimeout(() => {
+      apply();
+      hero.classList.remove('bf-hero--fading');
+      setTimeout(() => { transitioning = false; }, FADE_MS);
+    }, FADE_MS);
+  }
+
+  /** Set the active card and update hero */
+  function setActive(idx, instant) {
+    const cards = track.querySelectorAll('.bf-bcard');
+    const len = cards.length;
+    if (len === 0) return;
+    idx = ((idx % len) + len) % len;
+    if (idx === activeIdx && !instant) return;
+
+    cards.forEach(c => c.classList.remove('bf-bcard--active'));
+    activeIdx = idx;
+    cards[activeIdx].classList.add('bf-bcard--active');
+    cards[activeIdx].scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+    updateHero(activeIdx, instant);
+  }
+
+  function advance() { setActive(activeIdx + 1); }
+
+  function startTimer() {
+    stopTimer();
+    timer = setInterval(() => { if (!paused) advance(); }, INTERVAL_MS);
+  }
+  function stopTimer() {
+    if (timer) { clearInterval(timer); timer = null; }
+  }
+
+  // Build cards and set initial state
+  renderCards();
+  const defaultIdx = PROJECTS.findIndex(p => p.title === 'MinaTamis');
+  setActive(defaultIdx >= 0 ? defaultIdx : 0, true);
+
+  // Wire card clicks and keyboard
+  track.addEventListener('click', (e) => {
+    const card = e.target.closest('.bf-bcard');
+    if (!card) return;
+    const idx = Number(card.dataset.idx);
+    setActive(idx);
+    startTimer();
+  });
+  track.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = e.target.closest('.bf-bcard');
+    if (!card) return;
+    e.preventDefault();
+    const idx = Number(card.dataset.idx);
+    setActive(idx);
+    startTimer();
+  });
+
+  // Pause on hover / focus
+  track.addEventListener('mouseenter', () => { paused = true; });
+  track.addEventListener('mouseleave', () => { paused = false; });
+  track.addEventListener('focusin', () => { paused = true; });
+  track.addEventListener('focusout', () => { paused = false; });
+
+  // Mouse-wheel horizontal scroll
+  track.addEventListener('wheel', (e) => {
+    if (Math.abs(e.deltaY) < 4) return;
+    e.preventDefault();
+    track.scrollBy({ left: e.deltaY * 2, behavior: 'smooth' });
+    if (e.deltaY > 0) setActive(activeIdx + 1);
+    else setActive(activeIdx - 1);
+    startTimer();
+  }, { passive: false });
+
+  // Drag-to-scroll
+  let dragging = false;
+  let startX = 0;
+  let scrollStart = 0;
+
+  track.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    dragging = true;
+    startX = e.clientX;
+    scrollStart = track.scrollLeft;
+    track.setPointerCapture(e.pointerId);
+    track.style.cursor = 'grabbing';
+    paused = true;
+  });
+  track.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    track.scrollLeft = scrollStart - (e.clientX - startX);
+  });
+  const endDrag = (e) => {
+    if (!dragging) return;
+    dragging = false;
+    track.style.cursor = '';
+    paused = false;
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 40) {
+      if (dx < 0) setActive(activeIdx + 1);
+      else setActive(activeIdx - 1);
+    }
+    startTimer();
+  };
+  track.addEventListener('pointerup', endDrag);
+  track.addEventListener('pointercancel', endDrag);
+
+  // Start auto-cycle
+  startTimer();
+})();

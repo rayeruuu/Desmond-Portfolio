@@ -26,14 +26,39 @@
 
   <!-- Intro screen -->
   <div id="intro" class="intro" aria-live="polite">
+    <div class="intro-scanlines"></div>
     <div class="intro-content">
-      <div class="intro-counter">
-        <span class="intro-pct" id="introPct">0</span><span class="intro-pct-sign">%</span>
+      <div class="intro-logo-mark">DN</div>
+      <div class="intro-status">
+        <span class="intro-label" id="introLabel">INITIALIZING SYSTEMS</span>
+        <span class="intro-build">BUILD 2026.02</span>
       </div>
-      <div class="intro-line"></div>
-      <p class="intro-label">Loading portfolio</p>
-      <p class="intro-name">DESMOND</p>
+      <div class="intro-bar-wrap">
+        <div class="intro-bar" id="introBar"><div class="intro-bar__fill"></div></div>
+        <span class="intro-pct" id="introPct">0%</span>
+      </div>
+      <div class="intro-checks" id="introChecks">
+        <p class="intro-check" data-delay="200">[OK] Loading assets</p>
+        <p class="intro-check" data-delay="800">[OK] Shader pipeline ready</p>
+        <p class="intro-check" data-delay="1400">[OK] Project manifest loaded</p>
+        <p class="intro-check" data-delay="2000">[OK] Portfolio online</p>
+      </div>
     </div>
+    <p class="intro-footer">DESMOND NADELA &mdash; GAME DEVELOPER</p>
+  </div>
+
+  <!-- Title screen (BF-style key art) -->
+  <div id="titleScreen" class="title-screen" aria-hidden="true">
+    <div class="title-screen__bg title-screen__bg--a" id="titleBgA"></div>
+    <div class="title-screen__bg title-screen__bg--b" id="titleBgB"></div>
+    <div class="title-screen__overlay"></div>
+    <div class="title-screen__scanlines"></div>
+    <div class="title-screen__content">
+      <h1 class="title-screen__name">DESMOND<br>NADELA</h1>
+      <p class="title-screen__sub">GAME DEVELOPER &bull; 3D ARTIST &bull; DESIGNER</p>
+      <button class="title-screen__enter" id="titleEnter" type="button">CLICK TO ENTER</button>
+    </div>
+    <p class="title-screen__build">PORTFOLIO &mdash; 2026</p>
   </div>
 
   <!-- Skip to content -->
@@ -52,71 +77,116 @@
        GAME SCREENS
        ================================================================ -->
 
-  <!-- ============ MAIN MENU ============ -->
+  <!-- ============ MAIN MENU (BF2042-style) ============ -->
   <div class="game-screen active" id="screenMenu">
-    <div class="screen-body menu-layout">
-      <div class="menu-left">
-        <div class="menu-brand">
-          <p class="menu-eyebrow">GAME DEV PORTFOLIO</p>
-          <h1 class="menu-title">DESMOND<br><span class="menu-title-sub">NADELA</span></h1>
-          <p class="menu-role">Game Developer &amp; Creative Technologist</p>
-        </div>
-        <nav class="menu-nav" aria-label="Main menu">
-          <button class="menu-item" data-screen="screenProjects" type="button">
-            <span class="menu-num">01</span>
-            <span class="menu-label">PROJECTS</span>
-            <svg class="menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
-          </button>
-          <button class="menu-item" data-screen="screenAbout" type="button">
-            <span class="menu-num">02</span>
-            <span class="menu-label">ABOUT</span>
-            <svg class="menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
-          </button>
-          <button class="menu-item" data-screen="screenSkills" type="button">
-            <span class="menu-num">03</span>
-            <span class="menu-label">SKILLS</span>
-            <svg class="menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
-          </button>
-          <button class="menu-item" data-screen="screenResume" type="button">
-            <span class="menu-num">04</span>
-            <span class="menu-label">RESUME</span>
-            <svg class="menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
-          </button>
-          <button class="menu-item" data-screen="screenContact" type="button">
-            <span class="menu-num">05</span>
-            <span class="menu-label">CONTACT</span>
-            <svg class="menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
-          </button>
-        </nav>
+
+    <!-- ---- Top nav bar ---- -->
+    <div class="bf-topnav">
+      <div class="bf-topnav__left">
+        <span class="bf-logo-mark">DN</span>
       </div>
-      <div class="menu-right">
-        <div class="menu-photo-wrap">
-          <div class="menu-photo-ring"></div>
-          <div class="menu-photo-ring menu-photo-ring--2"></div>
-          <img id="heroPhoto" class="menu-photo" src="assets/images/picture.png" alt="Desmond" />
-          <div class="menu-photo-glow" aria-hidden="true"></div>
+      <div class="bf-topnav__right">
+        <div class="hud-social">
+          <a href="https://www.facebook.com/mondsssss/" target="_blank" rel="noopener" aria-label="Facebook"><img class="social-icon" src="assets/icons/facebook-svgrepo-com.svg" alt="Facebook" /></a>
+          <a href="https://www.linkedin.com/in/desmond-nadela" target="_blank" rel="noopener" aria-label="LinkedIn"><img class="social-icon" src="assets/icons/linkedin-svgrepo-com.svg" alt="LinkedIn" /></a>
+          <a href="https://github.com/rayeruuu" target="_blank" rel="noopener" aria-label="GitHub"><img class="social-icon" src="assets/icons/github-svgrepo-com.svg" alt="GitHub" /></a>
         </div>
-        <div class="menu-stats">
-          <div class="stat"><span class="stat-num" data-count="15">0</span><span class="stat-label">Projects</span></div>
-          <div class="stat-divider"></div>
-          <div class="stat"><span class="stat-num" data-count="5">0</span><span class="stat-label">Unity Games</span></div>
-          <div class="stat-divider"></div>
-          <div class="stat"><span class="stat-num" data-count="6">0</span><span class="stat-label">3D Models</span></div>
-        </div>
+        <span class="bf-level">
+          <span class="bf-level__num">15</span>
+        </span>
+        <img id="heroPhoto" class="bf-avatar" src="assets/images/picture.png" alt="Desmond" />
       </div>
     </div>
+
+    <!-- ---- Main body ---- -->
+    <div class="screen-body bf-body">
+
+      <!-- Hero feature (center) — populated by JS -->
+      <div class="bf-hero" id="bfHero">
+        <div class="bf-hero__bg" id="bfHeroBg"></div>
+        <div class="bf-hero__overlay"></div>
+        <div class="bf-hero__content" id="bfHeroContent">
+          <p class="bf-hero__creator" id="bfHeroCreator"></p>
+          <h1 class="bf-hero__title" id="bfHeroTitle"></h1>
+          <p class="bf-hero__desc" id="bfHeroDesc"></p>
+          <span class="bf-hero__divider"></span>
+        </div>
+      </div>
+
+      <!-- Right panel (tech stack) -->
+      <aside class="bf-panel">
+        <div class="bf-panel__header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <span>TECH STACK</span>
+        </div>
+        <div class="bf-panel__body">
+          <div class="bf-stat-row">
+            <div class="bf-stat-row__top">
+              <span class="bf-stat-row__label">Unity / C#</span>
+              <span class="bf-stat-row__val">Advanced</span>
+            </div>
+            <div class="bf-stat-row__bar"><span style="width:95%"></span></div>
+          </div>
+          <div class="bf-stat-row">
+            <div class="bf-stat-row__top">
+              <span class="bf-stat-row__label">Programming</span>
+              <span class="bf-stat-row__val">Strong</span>
+            </div>
+            <div class="bf-stat-row__bar"><span style="width:80%"></span></div>
+          </div>
+          <div class="bf-stat-row">
+            <div class="bf-stat-row__top">
+              <span class="bf-stat-row__label">Adobe Creative</span>
+              <span class="bf-stat-row__val">Advanced</span>
+            </div>
+            <div class="bf-stat-row__bar"><span style="width:95%"></span></div>
+          </div>
+          <div class="bf-stat-row">
+            <div class="bf-stat-row__top">
+              <span class="bf-stat-row__label">Video Editing</span>
+              <span class="bf-stat-row__val">Strong</span>
+            </div>
+            <div class="bf-stat-row__bar"><span style="width:80%"></span></div>
+          </div>
+          <div class="bf-stat-row">
+            <div class="bf-stat-row__top">
+              <span class="bf-stat-row__label">Maya / 3D</span>
+              <span class="bf-stat-row__val">Mid</span>
+            </div>
+            <div class="bf-stat-row__bar"><span style="width:55%"></span></div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Bottom section: sub-nav + featured cards -->
+      <div class="bf-bottom">
+        <div class="bf-bottom__left">
+          <button class="bf-subnav-item menu-item" data-screen="screenProjects" type="button">PROJECTS</button>
+          <button class="bf-subnav-item menu-item" data-screen="screenAbout" type="button">ABOUT</button>
+          <button class="bf-subnav-item menu-item" data-screen="screenResume" type="button">RESUME</button>
+          <button class="bf-subnav-item menu-item" data-screen="screenContact" type="button">CONTACT</button>
+        </div>
+        <div class="bf-bottom__right">
+          <p class="bf-bottom__label">FEATURED PROJECTS</p>
+          <div class="bf-bottom__cards" id="bfFeaturedCards">
+            <!-- Cards rendered by JS from PROJECTS array -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- HUD bar -->
     <div class="hud-bar">
       <div class="hud-left">
         <span class="hud-hint"><kbd>&uarr;</kbd><kbd>&darr;</kbd> Navigate</span>
         <span class="hud-hint"><kbd>Enter</kbd> Select</span>
       </div>
       <div class="hud-right">
-        <div class="hud-social">
-          <a href="https://www.facebook.com/mondsssss/" target="_blank" rel="noopener" aria-label="Facebook"><img class="social-icon" src="assets/icons/facebook-svgrepo-com.svg" alt="Facebook" /></a>
-          <a href="https://www.linkedin.com/in/desmond-nadela" target="_blank" rel="noopener" aria-label="LinkedIn"><img class="social-icon" src="assets/icons/linkedin-svgrepo-com.svg" alt="LinkedIn" /></a>
-          <a href="https://github.com/rayeruuu" target="_blank" rel="noopener" aria-label="GitHub"><img class="social-icon" src="assets/icons/github-svgrepo-com.svg" alt="GitHub" /></a>
-        </div>
         <span class="hud-copy">&copy; <span id="year"></span> Desmond Nadela</span>
+      </div>
+    </div>
+  </div>
       </div>
     </div>
   </div>
@@ -169,6 +239,7 @@
     </div>
     <div class="screen-body panel-layout">
       <div class="panel-main">
+        <img class="about-photo" src="assets/images/picture.png" alt="Desmond Nadela" />
         <p>I am a highly motivated Game Developer and BS Information Technology student specializing in Animation and Game Development. I possess a strong foundation in C#, C++, and Unity, with proven experience in creating robust AI &amp; Gameplay systems and intuitive User Interfaces.</p>
         <p>My project portfolio, including titles like MinaTamis and Lucid, showcases my ability to transition seamlessly between roles like Co-Programmer and Lead Developer. I am eager to secure an internship to leverage my technical programming, 3D modeling, and strong organizational skills in a professional game development environment.</p>
       </div>
@@ -184,66 +255,6 @@
           <span class="skill-tag">After Effects</span>
           <span class="skill-tag">Premiere Pro</span>
         </div>
-      </div>
-    </div>
-    <div class="hud-bar">
-      <div class="hud-left">
-        <span class="hud-hint"><kbd>Esc</kbd> Back</span>
-      </div>
-      <div class="hud-right"></div>
-    </div>
-  </div>
-
-  <!-- ============ SKILLS ============ -->
-  <div class="game-screen" id="screenSkills">
-    <div class="screen-header">
-      <button class="screen-back-btn" data-screen="screenMenu" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        BACK
-      </button>
-      <div class="screen-title-wrap">
-        <span class="screen-eyebrow">DESMOND NADELA</span>
-        <h2 class="screen-title">TECH STACK</h2>
-      </div>
-    </div>
-    <div class="screen-body">
-      <p class="screen-lead">Focused depth in a few core areas. Levels reflect production readiness, not just familiarity.</p>
-      <div class="loadout-grid">
-        <article class="loadout-card">
-          <div class="loadout-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-          <header><h3>Programming</h3><span class="level-badge">Strong</span></header>
-          <p>General-purpose programming for gameplay, tools, and scripting.</p>
-          <div class="meter dots" data-level="4"></div>
-          <ul class="chips"><li class="chip">C#</li><li class="chip">C++</li><li class="chip">Python</li><li class="chip">JavaScript</li><li class="chip">HTML</li><li class="chip">CSS</li><li class="chip">Java</li><li class="chip">PHP</li></ul>
-        </article>
-        <article class="loadout-card">
-          <div class="loadout-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="18" y2="12"/></svg></div>
-          <header><h3>Unity / C#</h3><span class="level-badge level-badge--top">Advanced</span></header>
-          <p>Gameplay systems, editor tooling, profiling, and build pipelines.</p>
-          <div class="meter dots" data-level="5"></div>
-          <ul class="chips"><li class="chip">UI</li><li class="chip">Coroutines</li><li class="chip">Lighting</li><li class="chip">Scenes</li><li class="chip">Version Control</li></ul>
-        </article>
-        <article class="loadout-card">
-          <div class="loadout-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
-          <header><h3>Video Editing</h3><span class="level-badge">Strong</span></header>
-          <p>Color grading, motion graphics, and storytelling for trailers and devlogs.</p>
-          <div class="meter dots" data-level="4"></div>
-          <ul class="chips"><li class="chip">Premiere Pro</li><li class="chip">After Effects</li><li class="chip">DaVinci Resolve</li><li class="chip">CapCut</li></ul>
-        </article>
-        <article class="loadout-card">
-          <div class="loadout-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
-          <header><h3>Maya</h3><span class="level-badge level-badge--mid">Intermediate</span></header>
-          <p>Low-poly modeling, UVs, basic rigging, and clean export pipelines.</p>
-          <div class="meter dots" data-level="3"></div>
-          <ul class="chips"><li class="chip">Modeling</li><li class="chip">UV/Texture</li><li class="chip">Bake</li><li class="chip">Animation</li></ul>
-        </article>
-        <article class="loadout-card">
-          <div class="loadout-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></div>
-          <header><h3>Adobe Creative</h3><span class="level-badge level-badge--top">Advanced</span></header>
-          <p>Raster art, vector branding, UI mockups, and promotional graphics.</p>
-          <div class="meter dots" data-level="5"></div>
-          <ul class="chips"><li class="chip">Photoshop</li><li class="chip">Illustrator</li><li class="chip">Lightroom</li></ul>
-        </article>
       </div>
     </div>
     <div class="hud-bar">
