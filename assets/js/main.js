@@ -711,6 +711,35 @@ filterButtons.forEach(btn => {
   });
 });
 
+// View mode toggle (Focus carousel vs. Grid overview)
+const viewToggleButtons = Array.from(document.querySelectorAll('.view-toggle__btn'));
+let viewMode = (window.matchMedia && window.matchMedia('(max-width: 900px)').matches) ? 'grid' : 'focus';
+
+function applyViewMode() {
+  if (warCardsEl) warCardsEl.classList.toggle('is-grid', viewMode === 'grid');
+  viewToggleButtons.forEach(b => {
+    const active = b.dataset.view === viewMode;
+    b.classList.toggle('is-active', active);
+    b.setAttribute('aria-pressed', String(active));
+  });
+}
+
+viewToggleButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.view === viewMode) return;
+    viewMode = btn.dataset.view;
+    applyViewMode();
+    if (viewMode === 'focus') {
+      const active = warCardsEl?.querySelector('.war-card.active');
+      if (active) requestAnimationFrame(() => active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }));
+    } else {
+      warCardsEl?.scrollTo({ top: 0, behavior: 'auto' });
+    }
+    track('View Mode', { mode: viewMode });
+  });
+});
+
+applyViewMode();
 renderWarCards();
 
 // Initialize dot meters (skill level indicators)
