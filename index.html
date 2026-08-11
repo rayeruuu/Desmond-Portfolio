@@ -1,495 +1,402 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Desmond's Portfolio</title>
-  <meta name="description" content="Personal tech portfolio: About, Unity/3D/2D projects, and contact." />
-  <meta property="og:title" content="Desmond's Portfolio" />
-  <meta property="og:description" content="Showcasing Unity, 3D, 2D, and other projects." />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <title>Desmond Nadela — Game Developer &amp; 3D Artist</title>
+  <meta name="description" content="Portfolio of Desmond Nadela — Unity game developer and 3D artist. Rotoblocks live on Google Play, plus Unity games, 3D art and design work." />
+  <meta name="theme-color" content="#00041d" />
+
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="https://raw.githubusercontent.com/github/explore/main/topics/portfolio/portfolio.png" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%2300E5FF'/%3E%3Cstop offset='1' stop-color='%23B245FF'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='128' height='128' rx='24' fill='%2312141C'/%3E%3Cpath d='M22 86 L64 22 L106 86' stroke='url(%23g)' stroke-width='10' fill='none'/%3E%3Ccircle cx='64' cy='86' r='10' fill='url(%23g)'/%3E%3C/svg%3E" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preload" as="image" href="assets/images/picture.png" />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.min.css" />
-  <link rel="stylesheet" href="assets/css/styles.css" />
-  <meta name="theme-color" content="#08090d" />
+  <meta property="og:title" content="Desmond Nadela — Game Developer &amp; 3D Artist" />
+  <meta property="og:description" content="Unity game developer and 3D artist. Rotoblocks live on Google Play, plus Unity games, 3D art and design work." />
+  <meta property="og:image" content="https://rayeruuu.github.io/Desmond-Portfolio/assets/images/og-preview.jpg" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Desmond's Portfolio" />
-  <meta name="twitter:description" content="Game Developer & Creative Technologist — Unity, 3D, 2D projects" />
+  <meta name="twitter:title" content="Desmond Nadela — Game Developer &amp; 3D Artist" />
+  <meta name="twitter:description" content="Unity game developer and 3D artist. Rotoblocks live on Google Play, plus Unity games, 3D art and design work." />
+  <meta name="twitter:image" content="https://rayeruuu.github.io/Desmond-Portfolio/assets/images/og-preview.jpg" />
+
+  <link rel="icon" href="assets/images/projects/rotoblocks/icon.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" as="image" href="assets/images/projects/rotoblocks/icon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="assets/css/tokens.css" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
-<body>
+<body class="is-booting">
 
-  <!-- Intro screen -->
-  <div id="intro" class="intro" aria-live="polite">
-    <div class="intro-scanlines"></div>
-    <div class="intro-content">
-      <div class="intro-logo-mark">DN</div>
-      <div class="intro-status">
-        <span class="intro-label" id="introLabel">INITIALIZING SYSTEMS</span>
-        <span class="intro-build">BUILD 2026.02</span>
-      </div>
-      <div class="intro-bar-wrap">
-        <div class="intro-bar" id="introBar"><div class="intro-bar__fill"></div></div>
-        <span class="intro-pct" id="introPct">0%</span>
-      </div>
-      <div class="intro-checks" id="introChecks">
-        <p class="intro-check" data-delay="200">[OK] Loading assets</p>
-        <p class="intro-check" data-delay="800">[OK] Shader pipeline ready</p>
-        <p class="intro-check" data-delay="1400">[OK] Project manifest loaded</p>
-        <p class="intro-check" data-delay="2000">[OK] Portfolio online</p>
-      </div>
+  <noscript>
+    <style>
+      .boot, .chrome, .hud { display: none !important; }
+      .scene { position: static; visibility: visible; opacity: 1; filter: none; transform: none; }
+      .stage { position: static; inset: auto; overflow-y: auto; height: 100dvh; }
+      body { overflow: auto; }
+    </style>
+    <p style="padding:24px;text-align:center;color:#8fa3c4">
+      This portfolio needs JavaScript for its navigation.
+      You can still reach me at <a href="mailto:ryelnadela@gmail.com" style="color:#e0a34e">ryelnadela@gmail.com</a>.
+    </p>
+  </noscript>
+
+  <!-- ===== Boot loader ================================================== -->
+  <div class="boot" id="boot" role="status" aria-live="polite">
+    <p class="boot__mark">DN</p>
+    <div class="boot__status">
+      <span id="bootLabel">Initialising</span>
+      <span>Build 2026.08</span>
     </div>
-    <p class="intro-footer">DESMOND NADELA &mdash; GAME DEVELOPER</p>
+    <div class="boot__bar"><div class="boot__fill" id="bootFill"></div></div>
+    <p class="boot__pct" id="bootPct">0%</p>
   </div>
 
-  <!-- Title screen (BF-style key art) -->
-  <div id="titleScreen" class="title-screen" aria-hidden="true">
-    <div class="title-screen__bg title-screen__bg--a" id="titleBgA"></div>
-    <div class="title-screen__bg title-screen__bg--b" id="titleBgB"></div>
-    <div class="title-screen__overlay"></div>
-    <div class="title-screen__scanlines"></div>
-    <div class="title-screen__content">
-      <h1 class="title-screen__name">DESMOND<br>NADELA</h1>
-      <p class="title-screen__sub">GAME DEVELOPER &bull; 3D ARTIST &bull; DESIGNER</p>
-      <button class="title-screen__enter" id="titleEnter" type="button">CLICK TO ENTER</button>
-    </div>
-    <p class="title-screen__build">PORTFOLIO &mdash; 2026</p>
+  <div class="boot-error" id="bootError" hidden>
+    <p class="eyebrow eyebrow--gold">Local preview only</p>
+    <p><strong>Nothing is wrong with the site.</strong> It is open straight from
+       your disk (<code>file://</code>), which is not a web server — and browsers
+       deliberately block JavaScript modules and local file reads in that mode.</p>
+    <p><strong>On GitHub Pages this page works with no extra steps.</strong>
+       You only need the line below to preview it on this computer before you
+       push. Double-click <code>serve.bat</code>, or run:</p>
+    <pre><code>python -m http.server 8000</code></pre>
+    <p>Then open <code>http://localhost:8000</code>.</p>
   </div>
 
-  <!-- Skip to content -->
-  <a href="#screenMenu" class="skip-link">Skip to content</a>
+  <script>
+    /* Watchdog. The boot loader must never trap a visitor: if the modules never
+       execute, replace it with an explanation rather than an endless 0%. */
+    (function () {
+      var GRACE_MS = 6000;
+      window.setTimeout(function () {
+        var root = document.documentElement;
+        if (root.dataset.booted === 'true') return;
 
-  <!-- Three.js shader background -->
-  <div id="shaderBg" aria-hidden="true"></div>
+        var boot = document.getElementById('boot');
+        if (boot) boot.classList.add('is-done');
+        document.body.classList.remove('is-booting');
 
-  <!-- Animated background grid -->
-  <div class="bg-canvas" aria-hidden="true"><div class="bg-grid"></div></div>
-
-  <!-- Cursor glow -->
-  <div id="cursorGlow" class="cursor-glow" aria-hidden="true"></div>
-
-  <!-- Glitch transition overlay -->
-  <div id="glitchOverlay" class="glitch-overlay" aria-hidden="true"></div>
-
-  <!-- Floating particles -->
-  <canvas id="particleCanvas" class="particle-canvas" aria-hidden="true"></canvas>
-
-  <!-- ================================================================
-       GAME SCREENS
-       ================================================================ -->
-
-  <!-- ============ MAIN MENU (BF2042-style) ============ -->
-  <div class="game-screen active" id="screenMenu">
-
-    <!-- ---- Top nav bar ---- -->
-    <div class="bf-topnav">
-      <div class="bf-topnav__left">
-        <span class="bf-logo-mark">DN</span>
-      </div>
-      <div class="bf-topnav__right">
-        <div class="hud-social">
-          <a href="https://www.facebook.com/mondsssss/" target="_blank" rel="noopener" aria-label="Facebook"><img class="social-icon" src="assets/icons/facebook-svgrepo-com.svg" alt="Facebook" /></a>
-          <a href="https://www.linkedin.com/in/desmond-nadela" target="_blank" rel="noopener" aria-label="LinkedIn"><img class="social-icon" src="assets/icons/linkedin-svgrepo-com.svg" alt="LinkedIn" /></a>
-          <a href="https://github.com/rayeruuu" target="_blank" rel="noopener" aria-label="GitHub"><img class="social-icon" src="assets/icons/github-svgrepo-com.svg" alt="GitHub" /></a>
-        </div>
-        <span class="bf-level">
-          <span class="bf-level__num">15</span>
-        </span>
-        <img id="heroPhoto" class="bf-avatar" src="assets/images/picture.png" alt="Desmond" />
-      </div>
-    </div>
-
-    <!-- ---- Main body ---- -->
-    <div class="screen-body bf-body">
-
-      <!-- Hero feature (center) — populated by JS -->
-      <div class="bf-hero" id="bfHero">
-        <div class="bf-hero__bg" id="bfHeroBg"></div>
-        <div class="bf-hero__overlay"></div>
-        <div class="bf-hero__content" id="bfHeroContent">
-          <p class="bf-hero__creator" id="bfHeroCreator"></p>
-          <h1 class="bf-hero__title" id="bfHeroTitle"></h1>
-          <p class="bf-hero__desc" id="bfHeroDesc"></p>
-          <span class="bf-hero__divider"></span>
-        </div>
-      </div>
-
-      <!-- Right panel (tech stack) -->
-      <aside class="bf-panel">
-        <div class="bf-panel__header">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          <span>TECH STACK</span>
-        </div>
-        <div class="bf-panel__body">
-          <div class="bf-stat-row">
-            <div class="bf-stat-row__top">
-              <span class="bf-stat-row__label">Unity / C#</span>
-              <span class="bf-stat-row__val">Advanced</span>
-            </div>
-            <div class="bf-stat-row__bar"><span style="width:95%"></span></div>
-          </div>
-          <div class="bf-stat-row">
-            <div class="bf-stat-row__top">
-              <span class="bf-stat-row__label">Programming</span>
-              <span class="bf-stat-row__val">Strong</span>
-            </div>
-            <div class="bf-stat-row__bar"><span style="width:80%"></span></div>
-          </div>
-          <div class="bf-stat-row">
-            <div class="bf-stat-row__top">
-              <span class="bf-stat-row__label">Adobe Creative</span>
-              <span class="bf-stat-row__val">Advanced</span>
-            </div>
-            <div class="bf-stat-row__bar"><span style="width:95%"></span></div>
-          </div>
-          <div class="bf-stat-row">
-            <div class="bf-stat-row__top">
-              <span class="bf-stat-row__label">Video Editing</span>
-              <span class="bf-stat-row__val">Strong</span>
-            </div>
-            <div class="bf-stat-row__bar"><span style="width:80%"></span></div>
-          </div>
-          <div class="bf-stat-row">
-            <div class="bf-stat-row__top">
-              <span class="bf-stat-row__label">Maya / 3D</span>
-              <span class="bf-stat-row__val">Mid</span>
-            </div>
-            <div class="bf-stat-row__bar"><span style="width:55%"></span></div>
-          </div>
-        </div>
-      </aside>
-
-      <!-- Bottom section: sub-nav + featured cards -->
-      <div class="bf-bottom">
-        <div class="bf-bottom__left">
-          <span class="bf-subnav-heading">// SELECT MISSION</span>
-          <button class="bf-subnav-item menu-item" data-screen="screenProjects" type="button"><span class="bf-subnav-num">01</span><span class="bf-subnav-label">PROJECTS</span></button>
-          <button class="bf-subnav-item menu-item" data-screen="screenAbout" type="button"><span class="bf-subnav-num">02</span><span class="bf-subnav-label">ABOUT</span></button>
-          <button class="bf-subnav-item menu-item" data-screen="screenResume" type="button"><span class="bf-subnav-num">03</span><span class="bf-subnav-label">RESUME</span></button>
-          <button class="bf-subnav-item menu-item" data-screen="screenContact" type="button"><span class="bf-subnav-num">04</span><span class="bf-subnav-label">CONTACT</span></button>
-        </div>
-        <div class="bf-bottom__right">
-          <p class="bf-bottom__label">FEATURED PROJECTS</p>
-          <div class="bf-bottom__cards" id="bfFeaturedCards">
-            <!-- Cards rendered by JS from PROJECTS array -->
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- HUD bar -->
-    <div class="hud-bar">
-      <div class="hud-left">
-        <span class="hud-hint hud-hint--kbd"><kbd>&uarr;</kbd><kbd>&darr;</kbd> Navigate</span>
-        <span class="hud-hint hud-hint--kbd"><kbd>Enter</kbd> Select</span>
-        <span class="hud-hint hud-hint--touch">Tap to select</span>
-      </div>
-      <div class="hud-right">
-        <span class="hud-copy">&copy; <span id="year"></span> Desmond Nadela</span>
-      </div>
-    </div>
-  </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============ PROJECTS (War Stories) ============ -->
-  <div class="game-screen" id="screenProjects">
-    <div class="screen-header">
-      <button class="screen-back-btn" data-screen="screenMenu" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        BACK
-      </button>
-      <div class="screen-title-wrap">
-        <span class="screen-eyebrow">DESMOND NADELA</span>
-        <h2 class="screen-title">PROJECTS</h2>
-      </div>
-      <div class="screen-filters" id="projectFilters" role="tablist" aria-label="Project category filters">
-        <button class="filter is-active" data-filter="All" role="tab" aria-selected="true">ALL</button>
-        <button class="filter" data-filter="Unity" role="tab">UNITY</button>
-        <button class="filter" data-filter="3D" role="tab">3D</button>
-        <button class="filter" data-filter="2D" role="tab">2D</button>
-        <button class="filter" data-filter="Other" role="tab">OTHER</button>
-      </div>
-      <div class="view-toggle" role="group" aria-label="View mode">
-        <button class="view-toggle__btn is-active" data-view="focus" type="button" aria-pressed="true" aria-label="Focus view">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="1"/></svg>
-          <span>FOCUS</span>
-        </button>
-        <button class="view-toggle__btn" data-view="grid" type="button" aria-pressed="false" aria-label="Grid view">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-          <span>GRID</span>
-        </button>
-      </div>
-    </div>
-    <div class="war-cards-viewport">
-      <div class="war-cards" id="warCards" aria-live="polite"></div>
-    </div>
-    <div class="hud-bar">
-      <div class="hud-left">
-        <span class="hud-hint hud-hint--kbd"><kbd>&larr;</kbd><kbd>&rarr;</kbd> Navigate</span>
-        <span class="hud-hint hud-hint--kbd"><kbd>Enter</kbd> Select</span>
-        <span class="hud-hint hud-hint--kbd"><kbd>Esc</kbd> Back</span>
-        <span class="hud-hint hud-hint--touch">Swipe to browse</span>
-      </div>
-      <div class="hud-right">
-        <span class="hud-counter" id="warCardCounter">01 / 13</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============ ABOUT ============ -->
-  <div class="game-screen" id="screenAbout">
-    <div class="screen-header">
-      <button class="screen-back-btn" data-screen="screenMenu" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        BACK
-      </button>
-      <div class="screen-title-wrap">
-        <span class="screen-eyebrow">DESMOND NADELA</span>
-        <h2 class="screen-title">ABOUT ME</h2>
-      </div>
-    </div>
-    <div class="screen-body panel-layout">
-      <div class="panel-main">
-        <img class="about-photo" src="assets/images/picture.png" alt="Desmond Nadela" />
-        <p>I am a highly motivated Game Developer and BS Information Technology student specializing in Animation and Game Development. I possess a strong foundation in C#, C++, and Unity, with proven experience in creating robust AI &amp; Gameplay systems and intuitive User Interfaces.</p>
-        <p>My project portfolio, including titles like MinaTamis and Lucid, showcases my ability to transition seamlessly between roles like Co-Programmer and Lead Developer. I am eager to secure an internship to leverage my technical programming, 3D modeling, and strong organizational skills in a professional game development environment.</p>
-      </div>
-      <div class="panel-side">
-        <h3>CORE SKILLS</h3>
-        <div class="skill-tags">
-          <span class="skill-tag">Unity</span>
-          <span class="skill-tag">C#</span>
-          <span class="skill-tag">C++</span>
-          <span class="skill-tag">Maya</span>
-          <span class="skill-tag">Photoshop</span>
-          <span class="skill-tag">Illustrator</span>
-          <span class="skill-tag">After Effects</span>
-          <span class="skill-tag">Premiere Pro</span>
-        </div>
-      </div>
-    </div>
-    <div class="hud-bar">
-      <div class="hud-left">
-        <span class="hud-hint hud-hint--kbd"><kbd>Esc</kbd> Back</span>
-      </div>
-      <div class="hud-right"></div>
-    </div>
-  </div>
-
-  <!-- ============ RESUME ============ -->
-  <div class="game-screen" id="screenResume">
-    <div class="screen-header">
-      <button class="screen-back-btn" data-screen="screenMenu" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        BACK
-      </button>
-      <div class="screen-title-wrap">
-        <span class="screen-eyebrow">DESMOND NADELA</span>
-        <h2 class="screen-title">RESUME</h2>
-      </div>
-    </div>
-    <div class="screen-body panel-layout resume-layout">
-      <div class="resume-stats" aria-label="At a glance">
-        <div class="resume-stat">
-          <span class="resume-stat__label">// Role</span>
-          <span class="resume-stat__value">Game Developer</span>
-        </div>
-        <div class="resume-stat">
-          <span class="resume-stat__label">// Projects</span>
-          <span class="resume-stat__value">13<span class="resume-stat__unit">shipped</span></span>
-        </div>
-        <div class="resume-stat">
-          <span class="resume-stat__label">// Core Stack</span>
-          <span class="resume-stat__value">Unity / C# / C++</span>
-        </div>
-        <div class="resume-stat">
-          <span class="resume-stat__label">// Status</span>
-          <span class="resume-stat__value resume-stat__value--accent">Internship-ready</span>
-        </div>
-      </div>
-      <article class="resume-panel glass-card">
-        <div class="resume-panel-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
-        <h3>My Resume</h3>
-        <p class="muted">Full CV with experience, education, and skills.</p>
-        <div class="resume-actions">
-          <a class="btn btn-glow" href="assets/resume/NADELA RESUME.pdf" download>
-            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download PDF
-          </a>
-          <a class="btn btn-glass" href="assets/resume/NADELA RESUME.pdf" target="_blank" rel="noopener">
-            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Open
-          </a>
-        </div>
-      </article>
-      <article class="resume-panel glass-card">
-        <div class="resume-panel-top">
-          <div>
-            <p class="eyebrow">Credential</p>
-            <h3>Latest Certification</h3>
-          </div>
-          <a class="btn btn-glass btn-small" href="assets/images/certi.jpg" target="_blank" rel="noopener">
-            <svg class="btn-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            View full
-          </a>
-        </div>
-        <figure class="certificate-figure">
-          <img src="assets/images/certi.jpg" alt="Certificate highlighting Desmond's recent achievement" loading="lazy" decoding="async">
-        </figure>
-        <div class="resume-actions">
-          <a class="btn btn-glow" href="assets/images/certi.jpg" download>
-            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download JPG
-          </a>
-          <a class="btn btn-glass" href="assets/images/certi.jpg" target="_blank" rel="noopener">
-            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Open
-          </a>
-        </div>
-      </article>
-    </div>
-    <div class="hud-bar">
-      <div class="hud-left">
-        <span class="hud-hint hud-hint--kbd"><kbd>Esc</kbd> Back</span>
-      </div>
-      <div class="hud-right"></div>
-    </div>
-  </div>
-
-  <!-- ============ CONTACT ============ -->
-  <div class="game-screen" id="screenContact">
-    <div class="screen-header">
-      <button class="screen-back-btn" data-screen="screenMenu" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        BACK
-      </button>
-      <div class="screen-title-wrap">
-        <span class="screen-eyebrow">DESMOND NADELA</span>
-        <h2 class="screen-title">CONTACT</h2>
-      </div>
-    </div>
-    <div class="screen-body contact-layout">
-      <div class="contact-status glass-card">
-        <div class="status-dot"></div>
-        <div><span class="status-badge" id="reachStatusBadge" role="status">Available for internship / freelance</span><span class="status-note" id="reachStatusNote">Replies within 24 hours.</span></div>
-      </div>
-      <div class="contact-grid">
-        <div class="contact-card glass-card">
-          <span class="contact-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
-          <div><span class="contact-card-label">Email</span><code id="displayEmail">you@email.com</code></div>
-          <button id="copyEmail" class="btn btn-glass btn-small" type="button">Copy</button>
-        </div>
-        <div class="contact-card glass-card">
-          <span class="contact-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-a)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
-          <div><span class="contact-card-label">Phone</span><code id="displayPhone">+639453191694</code></div>
-        </div>
-      </div>
-      <div class="contact-social">
-        <a class="social-link" href="https://www.facebook.com/mondsssss/" target="_blank" rel="noopener" aria-label="Facebook"><img class="social-icon" src="assets/icons/facebook-svgrepo-com.svg" alt="Facebook" /></a>
-        <a class="social-link" href="https://www.linkedin.com/in/desmond-nadela" target="_blank" rel="noopener" aria-label="LinkedIn"><img class="social-icon" src="assets/icons/linkedin-svgrepo-com.svg" alt="LinkedIn" /></a>
-        <a class="social-link" href="https://github.com/rayeruuu" target="_blank" rel="noopener" aria-label="GitHub"><img class="social-icon" src="assets/icons/github-svgrepo-com.svg" alt="GitHub" /></a>
-      </div>
-      <div class="contact-cta">
-        <a class="btn btn-glow" id="emailLink" href="mailto:you@email.com">
-          <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          Send Email
-        </a>
-        <a class="btn btn-glass" href="https://www.linkedin.com/in/desmond-nadela" target="_blank" rel="noopener">
-          <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-          LinkedIn
-        </a>
-        <a class="btn btn-glass" id="whatsAppLink" href="https://wa.me/639453191694" target="_blank" rel="noopener">
-          <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-          WhatsApp
-        </a>
-      </div>
-    </div>
-    <div class="hud-bar">
-      <div class="hud-left">
-        <span class="hud-hint hud-hint--kbd"><kbd>Esc</kbd> Back</span>
-      </div>
-      <div class="hud-right"></div>
-    </div>
-  </div>
-
-  <!-- ================================================================
-       PROJECT MODAL (preserved from original)
-       ================================================================ -->
-  <div id="projectModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
-    <div class="modal-overlay" data-close></div>
-    <div class="modal-dialog" role="document">
-      <button class="modal-close btn btn-glass" aria-label="Close" data-close><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-      <div class="modal-content">
-        <header class="modal-header">
-          <div><p class="modal-eyebrow"><svg class="modal-eyebrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>Project spotlight</p><h3 id="modalTitle">Project</h3></div>
-          <div id="modalTechChips" class="chips"></div>
-        </header>
-        <div class="modal-body">
-          <section class="modal-media">
-            <div class="carousel" aria-roledescription="carousel">
-              <div class="slides" id="carouselSlides"></div>
-              <div class="controls">
-                <button class="ctrl prev btn btn-glass" id="carouselPrev" aria-label="Previous"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-                <button class="ctrl next btn btn-glass" id="carouselNext" aria-label="Next"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
-              </div>
-            </div>
-            <div class="modal-media-meta">
-              <div class="carousel-meta">
-                <p id="carouselCounter" class="carousel-counter" aria-live="polite">01 / 01</p>
-                <div class="carousel-progress" aria-hidden="true"><span id="carouselProgressBar"></span></div>
-              </div>
-              <div class="carousel-thumbs" id="carouselThumbs" aria-label="Slide thumbnails" role="tablist"></div>
-            </div>
-          </section>
-          <div id="modalLinks" class="modal-actions"></div>
-          <section class="modal-accordions">
-            <details class="modal-accordion" id="modalLongSection" open><summary><svg class="accordion-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>Description</summary><div class="modal-accordion__content"><p id="modalLongDesc"></p></div></details>
-            <details class="modal-accordion" id="modalContributionSection" open><summary><svg class="accordion-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Contribution</summary><div class="modal-accordion__content"><p id="modalContribution"></p></div></details>
-            <details class="modal-accordion" id="modalFeaturesSection" open><summary><svg class="accordion-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Key Features</summary><div class="modal-accordion__content"><ul id="modalFeatures"></ul></div></details>
-          </section>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================================================================
-       CODE OVERLAY (preserved from original)
-       ================================================================ -->
-  <div id="codeOverlay" class="code-overlay" aria-hidden="true" role="dialog" aria-modal="true">
-    <div class="backdrop" data-code-close></div>
-    <div class="dialog">
-      <header class="code-overlay__header">
-        <div><p class="code-overlay__eyebrow"><svg class="code-eyebrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Full source</p><p id="codeOverlayTitle" class="code-overlay__title"></p><p id="codeOverlayMeta" class="code-overlay__meta"></p></div>
-        <button class="close" aria-label="Close code overlay" data-code-close><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-      </header>
-      <div class="code-overlay__nav" id="codeOverlayNav" hidden><div class="code-tabs" id="codeOverlayTabs" role="tablist" aria-label="Code files"></div></div>
-      <pre id="codeOverlayPre"><code id="codeOverlayContent" class="language-none"></code></pre>
-      <iframe id="codeOverlayFrame" title="Code file" hidden></iframe>
-    </div>
-  </div>
-
-  <!-- ================================================================
-       SCRIPTS
-       ================================================================ -->
-  <script defer data-domain="your-username.github.io" src="https://plausible.io/js/script.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-csharp.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-javascript.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-markup.min.js" defer></script>
-  <script type="importmap">
-    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.min.js" } }
+        // Modules never ran at all — almost always the file:// case.
+        if (root.dataset.modules !== 'ok') {
+          var note = document.getElementById('bootError');
+          if (note) note.hidden = false;
+        }
+      }, GRACE_MS);
+    })();
   </script>
-  <script type="module" src="assets/js/shader-bg.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/animejs/dist/bundles/anime.umd.min.js"></script>
-  <script src="assets/js/main.js" defer></script>
-  <script src="assets/js/animations.js" defer></script>
+
+  <!-- ===== Background layers ============================================ -->
+  <div class="bg" aria-hidden="true">
+    <svg class="bg__topo" preserveAspectRatio="none" focusable="false">
+      <defs>
+        <filter id="topo" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.0022" numOctaves="2" seed="11" result="n" />
+          <feColorMatrix in="n" type="matrix"
+            values="0 0 0 0 .498  0 0 0 0 .561  0 0 0 0 .788  1 0 0 0 0" result="a" />
+          <feComponentTransfer in="a" result="bands">
+            <feFuncA type="table" tableValues="0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0" />
+          </feComponentTransfer>
+          <feComponentTransfer in="bands">
+            <feFuncA type="gamma" amplitude="1" exponent="6" offset="0" />
+          </feComponentTransfer>
+        </filter>
+      </defs>
+      <rect width="100%" height="100%" filter="url(#topo)" />
+    </svg>
+
+    <svg class="bg__grain" preserveAspectRatio="none" focusable="false">
+      <defs>
+        <filter id="grain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+      </defs>
+      <rect width="100%" height="100%" filter="url(#grain)" />
+    </svg>
+
+    <canvas class="bg__dust" id="dust"></canvas>
+  </div>
+
+  <a class="skip-link" href="#stage">Skip to content</a>
+
+  <!-- ===== Top nav ====================================================== -->
+  <header class="chrome">
+    <nav class="nav" aria-label="Primary">
+      <a class="nav__link" href="#/work" data-nav="/work">Work</a>
+      <span class="nav__dot" aria-hidden="true"></span>
+      <a class="nav__link" href="#/about" data-nav="/about">About</a>
+      <a class="nav__mark" href="#/" data-nav="/" aria-label="Home">DN</a>
+      <a class="nav__link" href="#/resume" data-nav="/resume">Resume</a>
+      <span class="nav__dot" aria-hidden="true"></span>
+      <a class="nav__link" href="#/contact" data-nav="/contact">Contact</a>
+    </nav>
+  </header>
+
+  <!-- ===== Scenes ======================================================= -->
+  <main class="stage" id="stage">
+
+    <!-- ---- Home (scrolls) ---- -->
+    <section class="scene home" id="scene-home" data-scene="/" aria-labelledby="heroName">
+
+      <div class="home__rail" aria-hidden="true"><span class="home__rail-fill"></span></div>
+
+      <!-- Panel 1: hero -->
+      <div class="home__panel home__hero">
+        <div class="hero__composition">
+          <a class="hero__object" href="#/work/rotoblocks" aria-label="Open the featured project">
+            <span class="hero__object-inner">
+              <img id="heroObject" src="assets/images/projects/rotoblocks/icon.png" alt="Rotoblocks key art" />
+            </span>
+          </a>
+
+          <div class="hero__content">
+            <p class="eyebrow reveal" style="--i:0">Game Developer</p>
+            <h1 class="display hero__name reveal" style="--i:1" id="heroName">Desmond<br />Nadela</h1>
+            <span class="hero__caret reveal" style="--i:2" aria-hidden="true"></span>
+            <p class="hero__tagline reveal" style="--i:3">Unity &middot; 3D Art &middot; Shipped on Google Play</p>
+          </div>
+        </div>
+
+        <div class="hero__index">
+          <span class="num" id="heroIndex">01</span>
+          <hr class="rule" aria-hidden="true" />
+          <span class="num hero__featured" id="heroFeatured">Rotoblocks</span>
+        </div>
+
+        <div class="hero__auto" id="heroAuto">
+          <button class="hero__play" id="heroPlay" type="button" aria-label="Pause featured rotation"></button>
+          <svg class="hero__ring" viewBox="0 0 32 32" aria-hidden="true">
+            <circle class="hero__ring-track" cx="16" cy="16" r="14" />
+            <circle class="hero__ring-fill" id="heroRing" cx="16" cy="16" r="14" />
+          </svg>
+          <div class="hero__ticks" id="heroTicks"></div>
+        </div>
+
+        <a class="scroll-cue" href="#homeCraft">
+          <span>Scroll</span>
+          <span class="scroll-cue__line" aria-hidden="true"></span>
+        </a>
+      </div>
+
+      <!-- Panel 2: disciplines -->
+      <div class="home__panel home__craft" id="homeCraft">
+        <div class="home__head">
+          <p class="eyebrow eyebrow--muted scroll-reveal">What I do</p>
+          <h2 class="display home__h2 scroll-reveal">Craft</h2>
+        </div>
+
+        <div class="disciplines">
+          <article class="discipline scroll-reveal">
+            <span class="num discipline__idx">01</span>
+            <h3>Game Development</h3>
+            <p>Unity and C# — gameplay systems, enemy AI, pathfinding and UI, taken all the way through to a store release.</p>
+          </article>
+          <article class="discipline scroll-reveal">
+            <span class="num discipline__idx">02</span>
+            <h3>3D Art</h3>
+            <p>Hard-surface modelling, props and keyframe animation in Maya, built game-ready and lit for presentation.</p>
+          </article>
+          <article class="discipline scroll-reveal">
+            <span class="num discipline__idx">03</span>
+            <h3>Design</h3>
+            <p>UI/UX for games, plus branding, poster work and motion across Photoshop, Illustrator and After Effects.</p>
+          </article>
+        </div>
+      </div>
+
+      <!-- Panel 3: featured work -->
+      <div class="home__panel home__featured" id="homeFeatured">
+        <div class="home__head">
+          <p class="eyebrow eyebrow--muted scroll-reveal">Selected</p>
+          <h2 class="display home__h2 scroll-reveal">Featured</h2>
+        </div>
+
+        <div class="feature-strip" id="featureStrip"></div>
+
+        <a class="btn btn--primary scroll-reveal" href="#/work">View all work</a>
+      </div>
+
+    </section>
+
+    <!-- ---- Work deck ---- -->
+    <section class="scene work" id="scene-work" data-scene="/work" aria-labelledby="workHeading">
+      <div class="frame" aria-hidden="true"></div>
+
+      <div class="work__head">
+        <div>
+          <p class="eyebrow eyebrow--muted reveal" style="--i:0">Selected</p>
+          <h2 class="display reveal" id="workHeading" style="--i:1; font-size: var(--t-h2)">Work</h2>
+        </div>
+        <div class="filters reveal" style="--i:2" id="filters" role="tablist" aria-label="Filter projects"></div>
+        <p class="num reveal" style="--i:3" id="deckCounter" aria-live="polite">01 / 16</p>
+      </div>
+
+      <div class="deck reveal" style="--i:4" id="deck" role="list"></div>
+    </section>
+
+    <!-- ---- Project detail ---- -->
+    <section class="scene project" id="scene-project" data-scene="/work/:slug" aria-labelledby="projectTitle">
+      <div class="project__arc" aria-hidden="true"></div>
+      <a class="back-btn" href="#/work">&larr; All work</a>
+
+      <div class="project__media">
+        <div class="media-frame">
+          <div class="media-frame__inner">
+            <div class="slides" id="slides"></div>
+          </div>
+        </div>
+        <div class="carousel-bar">
+          <p class="num" id="slideCounter" aria-live="polite">01 / 01</p>
+          <div class="carousel-nav">
+            <button class="icon-btn" id="slidePrev" type="button" aria-label="Previous image">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+            <button class="icon-btn" id="slideNext" type="button" aria-label="Next image">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="project__body">
+        <img class="project__badge" id="projectBadge" src="" alt="" />
+        <h2 class="project__title" id="projectTitle"></h2>
+        <p class="eyebrow eyebrow--gold" id="projectCategory"></p>
+        <dl class="project__meta" id="projectMeta"></dl>
+        <div class="actions" id="projectActions"></div>
+        <p class="project__desc" id="projectDesc"></p>
+        <ul class="project__features" id="projectFeatures"></ul>
+        <div class="chips" id="projectTech"></div>
+      </div>
+    </section>
+
+    <!-- ---- About ---- -->
+    <section class="scene panel" id="scene-about" data-scene="/about" aria-labelledby="aboutHeading">
+      <div class="panel__main">
+        <img class="portrait reveal" style="--i:0" src="assets/images/picture.png" alt="Desmond Nadela" />
+        <p class="eyebrow eyebrow--gold reveal" style="--i:1">About</p>
+        <h2 class="display reveal" id="aboutHeading" style="--i:2; font-size: var(--t-h2)">Desmond Nadela</h2>
+        <p class="reveal" style="--i:3">I am a highly motivated Game Developer and BS Information Technology student specializing in Animation and Game Development. I possess a strong foundation in C#, C++, and Unity, with proven experience in creating robust AI &amp; Gameplay systems and intuitive User Interfaces.</p>
+        <p class="reveal" style="--i:4">My project portfolio, including titles like Rotoblocks, MinaTamis and Lucid, showcases my ability to transition seamlessly between roles like Co-Programmer and Lead Developer. I am eager to secure an internship to leverage my technical programming, 3D modeling, and strong organizational skills in a professional game development environment.</p>
+      </div>
+      <div class="panel__side">
+        <p class="eyebrow eyebrow--muted reveal" style="--i:5">Core skills</p>
+        <div class="skill-list reveal" style="--i:6">
+          <div class="skill"><span>Unity</span><span>Advanced</span></div>
+          <div class="skill"><span>UI / UX</span><span>Advanced</span></div>
+          <div class="skill"><span>Photoshop &amp; Illustrator</span><span>Advanced</span></div>
+          <div class="skill"><span>C#</span><span>Strong</span></div>
+          <div class="skill"><span>C++</span><span>Strong</span></div>
+          <div class="skill"><span>After Effects / Premiere</span><span>Strong</span></div>
+          <div class="skill"><span>Maya / 3D</span><span>Mid</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---- Resume ---- -->
+    <section class="scene panel" id="scene-resume" data-scene="/resume" aria-labelledby="resumeHeading" hidden
+             style="grid-template-columns: minmax(0,1fr); align-content: center;">
+      <div class="panel__main" style="gap: var(--s-6)">
+        <div>
+          <p class="eyebrow eyebrow--gold reveal" style="--i:0">Resume</p>
+          <h2 class="display reveal" id="resumeHeading" style="--i:1; font-size: var(--t-h2)">At a glance</h2>
+        </div>
+
+        <div class="stat-row reveal" style="--i:2">
+          <div class="stat"><span class="stat__label">Role</span><span class="stat__value">Game Developer</span></div>
+          <div class="stat"><span class="stat__label">Projects</span><span class="stat__value" id="statProjects">—</span></div>
+          <div class="stat"><span class="stat__label">Released</span><span class="stat__value" id="statReleased">—</span></div>
+          <div class="stat"><span class="stat__label">Core stack</span><span class="stat__value">Unity / C#</span></div>
+          <div class="stat"><span class="stat__label">Status</span><span class="stat__value">Internship-ready</span></div>
+        </div>
+
+        <div class="cards-2 reveal" style="--i:3">
+          <article class="tile">
+            <h3>Curriculum Vitae</h3>
+            <p>Full CV with experience, education, and skills.</p>
+            <div class="actions">
+              <a class="btn btn--primary" href="assets/resume/NADELA RESUME.pdf" download>Download PDF</a>
+              <a class="btn" href="assets/resume/NADELA RESUME.pdf" target="_blank" rel="noopener">Open</a>
+            </div>
+          </article>
+          <article class="tile">
+            <h3>Latest certification</h3>
+            <img src="assets/images/certi.jpg" alt="Certificate awarded to Desmond Nadela" loading="lazy" decoding="async" />
+            <div class="actions">
+              <a class="btn" href="assets/images/certi.jpg" target="_blank" rel="noopener">View full</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---- Contact ---- -->
+    <section class="scene contact" id="scene-contact" data-scene="/contact" aria-labelledby="contactHeading">
+      <div class="contact__lead">
+        <p class="eyebrow eyebrow--gold reveal" style="--i:0">Contact</p>
+        <h2 class="display reveal" id="contactHeading" style="--i:1">Let's build</h2>
+        <p class="contact__status reveal" style="--i:2">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="availability">Available for internship / freelance</span>
+        </p>
+      </div>
+
+      <div class="contact__rows reveal" style="--i:3">
+        <div class="contact__row">
+          <span class="eyebrow">Email</span>
+          <code id="displayEmail"></code>
+          <button class="btn" id="copyEmail" type="button">Copy</button>
+        </div>
+        <div class="contact__row">
+          <span class="eyebrow">Phone</span>
+          <code id="displayPhone"></code>
+          <span></span>
+        </div>
+      </div>
+
+      <div class="actions reveal" style="--i:4">
+        <a class="btn btn--primary" id="emailLink" href="#">Send email</a>
+        <a class="btn" href="https://www.linkedin.com/in/desmond-nadela" target="_blank" rel="noopener">LinkedIn</a>
+        <a class="btn" id="whatsappLink" href="#" target="_blank" rel="noopener">WhatsApp</a>
+      </div>
+
+      <div class="socials reveal" style="--i:5">
+        <a href="https://www.facebook.com/mondsssss/" target="_blank" rel="noopener" aria-label="Facebook"><img src="assets/icons/facebook-svgrepo-com.svg" alt="" /></a>
+        <a href="https://www.linkedin.com/in/desmond-nadela" target="_blank" rel="noopener" aria-label="LinkedIn"><img src="assets/icons/linkedin-svgrepo-com.svg" alt="" /></a>
+        <a href="https://github.com/rayeruuu" target="_blank" rel="noopener" aria-label="GitHub"><img src="assets/icons/github-svgrepo-com.svg" alt="" /></a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== HUD ========================================================== -->
+  <footer class="hud">
+    <div class="hud__hints">
+      <span><kbd>&larr;</kbd><kbd>&rarr;</kbd> Browse</span>
+      <span><kbd>Esc</kbd> Back</span>
+    </div>
+    <span>&copy; <span id="year"></span> Desmond Nadela</span>
+  </footer>
+
+  <!-- ===== Code overlay ================================================= -->
+  <div class="code-overlay" id="codeOverlay" role="dialog" aria-modal="true" aria-labelledby="codeTitle">
+    <div class="code-overlay__dialog">
+      <header class="code-overlay__head">
+        <div>
+          <p class="eyebrow eyebrow--muted">Source</p>
+          <p id="codeTitle"></p>
+        </div>
+        <button class="icon-btn" id="codeClose" type="button" aria-label="Close source viewer">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+        </button>
+      </header>
+      <div class="code-tabs" id="codeTabs" role="tablist" aria-label="Source files"></div>
+      <pre><code id="codeContent" class="language-csharp"></code></pre>
+    </div>
+  </div>
+
+  <script type="module" src="assets/js/main.js"></script>
 </body>
 </html>

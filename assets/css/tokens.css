@@ -1,0 +1,114 @@
+/* ==========================================================================
+   Design tokens — the single source of truth for colour, space, type and depth.
+   Nothing else in the stylesheet may declare a raw hex value or a magic number.
+   ========================================================================== */
+
+:root {
+  /* ---- Surfaces ------------------------------------------------------- */
+  --void: #00030f;
+  --navy-900: #00041d;
+  --navy-800: #010f2a;
+  --navy-700: #052039;
+  --navy-600: #08304f;
+  --spot: #0b3a63;
+
+  --card: rgba(4, 10, 36, .55);
+  --card-solid: #040a24;
+  --scrim: rgba(0, 3, 15, .88);
+
+  /* ---- Accents -------------------------------------------------------- */
+  --gold-500: #e0a34e;
+  --gold-300: #f0c88a;
+  --gold-700: #a9762f;
+
+  --mint-400: #8ed9cc;
+  --mint-600: #4fa89a;
+
+  --periwinkle: #7f8fc9;
+
+  /* ---- Text ----------------------------------------------------------- */
+  --white: #ffffff;
+  --text: #e8edf7;
+  --muted: #8fa3c4;
+  --faint: #5d6f92;
+
+  /* ---- Lines ---------------------------------------------------------- */
+  --hairline: rgba(143, 163, 196, .18);
+  --hairline-strong: rgba(143, 163, 196, .34);
+  --hairline-gold: rgba(224, 163, 78, .42);
+  --hairline-mint: rgba(142, 217, 204, .48);
+
+  /* ---- Spacing scale -------------------------------------------------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+  --s-9: 96px;
+
+  /* ---- Type scale ----------------------------------------------------- */
+  --font-display: 'Bodoni Moda', 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-ui: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+
+  --t-display: clamp(2.75rem, 8.5vw, 7.5rem);
+  --t-title: clamp(1.9rem, 4.4vw, 3.6rem);
+  --t-h2: clamp(1.4rem, 2.6vw, 2.1rem);
+  --t-h3: clamp(1.05rem, 1.6vw, 1.3rem);
+  --t-body: clamp(.875rem, 1.05vw, .975rem);
+  --t-small: .8125rem;
+  --t-label: .6875rem;
+  --t-micro: .625rem;
+
+  --track-display: .012em;
+  --track-label: .28em;
+  --track-nav: .2em;
+
+  /* ---- Radii ---------------------------------------------------------- */
+  --r-none: 0px;
+  --r-xs: 2px;
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-pill: 999px;
+
+  /* ---- Depth ---------------------------------------------------------- */
+  --z-bg: 0;
+  --z-texture: 1;
+  --z-dust: 2;
+  --z-scene: 10;
+  --z-chrome: 40;
+  --z-overlay: 200;
+  --z-boot: 900;
+
+  /* ---- Motion --------------------------------------------------------- */
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --ease-spring: cubic-bezier(.34, 1.4, .64, 1);
+
+  --d-fast: 180ms;
+  --d-base: 320ms;
+  --d-slow: 420ms;
+  --d-scene: 520ms;
+
+  --stagger: 60ms;
+
+  /* ---- Layout --------------------------------------------------------- */
+  --gutter: clamp(var(--s-5), 5vw, var(--s-9));
+  --chrome-h: 72px;
+  --hud-h: 44px;
+}
+
+/* Under reduced motion, collapse every duration to something imperceptible so
+   transitions still fire (and cleanup still runs) without any visible movement. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-fast: 1ms;
+    --d-base: 1ms;
+    --d-slow: 1ms;
+    --d-scene: 1ms;
+    --stagger: 0ms;
+  }
+}
