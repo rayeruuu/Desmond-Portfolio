@@ -6,7 +6,7 @@ export const CONFIG = Object.freeze({
   whatsappNumber: '639453191694',
   github: 'rayeruuu',
   linkedin: 'https://www.linkedin.com/in/desmond-nadela',
-  availability: 'Available for internship / freelance',
+  availability: 'Available for full-time / freelance',
   photo: 'assets/images/picture.png',
 });
 

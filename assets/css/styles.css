@@ -1409,6 +1409,9 @@ ul { list-style: none; }
   border: 1px solid var(--hairline);
 }
 
+/* A cropped certificate hides the name and date that make it worth showing. */
+.tile img.is-document { object-fit: contain; }
+
 .contact { align-content: center; gap: var(--s-6); }
 
 .contact__lead { display: grid; gap: var(--s-3); }
