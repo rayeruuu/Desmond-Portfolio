@@ -33,7 +33,9 @@
  * @property {string[]}    features
  * @property {string[]}    tech
  * @property {string[]}    tags
- * @property {{play?: string|null, demo?: string|null, github?: string|null, download?: string|null}} links
+ * @property {{play?: string|null, roblox?: string|null, demo?: string|null, github?: string|null,
+ *             download?: string|null, doc?: string|null}} links  `doc` is a design
+ *                                      document or write-up served from assets/docs.
  * @property {string}      cover        Full-size key image.
  * @property {string}      thumb        Small local WebP for cards and strips.
  * @property {{images: string[], video: string|null, localVideo: string|null, poster: string|null}} media
@@ -58,6 +60,58 @@ export const CATEGORY_ORDER = Object.freeze([
 
 /** @type {Project[]} */
 export const PROJECTS = [
+  {
+    slug: 'junkyard-prison',
+    title: 'Junkyard Prison',
+    titleLines: ['Junkyard', 'Prison'],
+    category: Category.Games,
+    year: '2026',
+    status: 'Released',
+    platform: 'Roblox',
+    role: 'Solo — design, programming, art, release',
+    featured: true,
+    highlight: true,
+    summary: 'Sort a real 100,000-piece landfill into the right bins to earn your way out of prison.',
+    longDescription:
+      'Junkyard Prison is a single-player Roblox simulator. You are sentenced for repeat littering and locked in a wire-mesh cage built over a desert landfill, and the only way out is to hand-clear exactly 100,000 pieces of trash into the right bin — Recyclable, Biodegradable or Non-Biodegradable. Every one of those 100,000 items is a real physical object in the world, so the mountain visibly shrinks as you work and the counter is always exact. Correct bins pay coins; wrong bins are rejected and cost you nothing but the walk back. Coins buy a sack, then grabbers, claws, an electric magnet and a high-tech vacuum, each one changing how the pile feels to clear, until the gate finally opens on the 100,000th item.',
+    contribution:
+      'Solo project — designed and shipped the whole game. Built a server-authoritative Luau architecture where every pickup, deposit, purchase and save is validated on the server, a save format that stores the pile as a 100,000-bit map so each of the three slots reloads the mountain exactly as it was left, and a physics budget that keeps all 100,000 low-poly items drawn at once by anchoring them until they are disturbed. Also modelled the trash and the yard, wrote the Warden dialogue and tutorial, and linked the live pass and product IDs.',
+    features: [
+      'A finite, physical 100,000-item pile that shrinks as you clear it',
+      'Three-way sorting — Recyclable, Biodegradable, Non-Biodegradable — with rare golden cans hidden in the pile',
+      'Six tools from bare hands to a high-tech vacuum, plus magnet and tractor-beam abilities',
+      'Levelled upgrades for bag size, walk speed, reach, coin rate and sorting efficiency',
+      '18 milestones, 20 challenges across 7 tracks, and a daily reward with a streak bonus',
+      'Three save slots, each keeping its own pile, coins and progress',
+      'An intro cutscene and a Warden PA tutorial that teach the first trip',
+      'A real ending: the gate opens at 100,000, with optional rebirth for a permanent coin bonus',
+    ],
+    tech: ['Roblox Studio', 'Luau', 'Blender'],
+    tags: ['Games', 'Roblox', 'Simulator', 'Released'],
+    links: {
+      play: null,
+      demo: null,
+      github: null,
+      roblox: 'https://www.roblox.com/games/124932975764593/Junkyard-Prison',
+      doc: 'assets/docs/junkyard-prison-gdd.pdf',
+    },
+    cover: 'assets/images/projects/junkyard-prison/icon.webp',
+    thumb: 'assets/images/thumbs/junkyard-prison.webp',
+    media: {
+      images: [
+        'assets/images/projects/junkyard-prison/pile-wide.webp',
+        'assets/images/projects/junkyard-prison/sorting-station.webp',
+        'assets/images/projects/junkyard-prison/inside-the-pile.webp',
+        'assets/images/projects/junkyard-prison/pile-night.webp',
+        'assets/images/projects/junkyard-prison/pile-approach.webp',
+      ],
+      video: null,
+      localVideo: null,
+      poster: null,
+    },
+    snippets: [],
+  },
+
   {
     slug: 'rotoblocks',
     title: 'Rotoblocks',

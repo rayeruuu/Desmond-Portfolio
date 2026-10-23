@@ -109,6 +109,11 @@ export function initProject() {
         `<a class="btn btn--primary" href="${p.links.play}" target="_blank" rel="noopener">Get it on Google Play</a>`,
       );
     }
+    if (p.links.roblox) {
+      buttons.push(
+        `<a class="btn btn--primary" href="${p.links.roblox}" target="_blank" rel="noopener">Play on Roblox</a>`,
+      );
+    }
     if (p.links.download) {
       buttons.push(
         `<a class="btn btn--primary" href="${p.links.download}" target="_blank" rel="noopener">Download &amp; play</a>`,
@@ -116,6 +121,11 @@ export function initProject() {
     }
     if (p.links.demo) {
       buttons.push(`<a class="btn" href="${p.links.demo}" target="_blank" rel="noopener">Play the demo</a>`);
+    }
+    if (p.links.doc) {
+      buttons.push(
+        `<a class="btn" href="${p.links.doc}" target="_blank" rel="noopener">Read the design document</a>`,
+      );
     }
     if (p.links.github) {
       buttons.push(`<a class="btn" href="${p.links.github}" target="_blank" rel="noopener">Repository</a>`);
